@@ -1,0 +1,127 @@
+<h1>Stream Pack Generator</h1>
+
+<div class="card">
+
+<h3>Create Stream Assets</h3>
+
+<button id="streamBtn"
+onclick="generateStream()">
+
+Generate Stream Pack
+
+</button>
+
+<div id="streamResult"
+style="margin-top:20px;"></div>
+
+</div>
+
+<script>
+
+let lastJobId=null;
+
+async function generateStream(){
+
+const btn=document.getElementById("streamBtn");
+
+btn.disabled=true;
+btn.innerText="Generating...";
+
+document.getElementById("streamResult")
+.innerHTML="Creating assets...";
+
+/* CREATE JOB */
+
+const res=
+await authFetch("/api/stream",{
+method:"POST"
+});
+
+if(!res){
+btn.disabled=false;
+return;
+}
+
+const data=await res.json();
+
+if(!data.success){
+
+showToast(data.error,"error");
+btn.disabled=false;
+return;
+
+}
+
+lastJobId=data.job;
+
+/* WAIT */
+
+waitForJob(data.job,(files)=>{
+
+btn.disabled=false;
+btn.innerText="Generate Stream Pack";
+
+let arr=[];
+
+try{
+arr=JSON.parse(files);
+}catch{}
+
+/* SHOW */
+
+let html="<div class='card'>";
+
+arr.forEach(f=>{
+
+html+=`
+
+<img src="/results/${f}"
+style="max-width:250px;margin:10px;border-radius:10px;" />
+
+`;
+
+});
+
+/* 🔥 DOWNLOAD BUTTON */
+
+html+=`
+
+<br><br>
+
+<button onclick="downloadPack()">
+Download ZIP
+</button>
+
+`;
+
+html+="</div>";
+
+document.getElementById("streamResult")
+.innerHTML=html;
+
+/* UPDATE USER */
+
+if(typeof loadUser==="function"){
+loadUser();
+}
+
+});
+
+}
+
+/* DOWNLOAD */
+
+function downloadPack(){
+
+if(!lastJobId){
+
+showToast("No pack","error");
+return;
+
+}
+
+window.open("/api/download/"+lastJobId);
+
+}
+
+</script>

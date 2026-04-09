@@ -1,0 +1,127 @@
+<h1>Admin Panel</h1>
+
+<div class="card">
+
+<h3>Platform Stats</h3>
+
+<p id="users">Users: loading...</p>
+
+<p id="projects">Projects: loading...</p>
+
+<p id="coins">Coins used: loading...</p>
+
+<p id="logos">Logos generated: loading...</p>
+
+</div>
+
+
+<div class="card">
+
+<h3>Tool Usage Analytics</h3>
+
+<div id="toolStats">
+
+Loading...
+
+</div>
+
+</div>
+
+
+<script>
+
+/* ADMIN STATS */
+
+async function loadAdmin(){
+
+try{
+
+const res=
+await authFetch("/api/admin");
+
+const data=
+await res.json();
+
+document.getElementById("users").innerText=
+"Users: "+data.users;
+
+document.getElementById("projects").innerText=
+"Projects: "+data.projects;
+
+document.getElementById("coins").innerText=
+"Coins used: "+data.coins;
+
+document.getElementById("logos").innerText=
+"Logos generated: "+data.logos;
+
+}catch(e){
+
+console.log(e);
+
+}
+
+}
+
+/* TOOL ANALYTICS */
+
+async function loadAnalytics(){
+
+try{
+
+const res=
+await authFetch("/api/analytics");
+
+const data=
+await res.json();
+
+let html="<h4>Tools</h4>";
+
+data.tools.forEach(t=>{
+
+html+=`
+
+<p>
+
+${t.type} : ${t.total}
+
+</p>
+
+`;
+
+});
+
+html+="<h4>Coins spent</h4>";
+
+data.coins.forEach(c=>{
+
+html+=`
+
+<p>
+
+${c.action} : ${Math.abs(c.total)}
+
+</p>
+
+`;
+
+});
+
+document
+.getElementById("toolStats")
+.innerHTML=html;
+
+}catch(e){
+
+console.log(e);
+
+}
+
+}
+
+/* INIT */
+
+loadAdmin();
+
+loadAnalytics();
+
+</script>

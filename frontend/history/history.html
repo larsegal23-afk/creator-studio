@@ -1,0 +1,37 @@
+<div class="card">
+
+<h2>Result History</h2>
+
+<button onclick="loadHistory()">
+Refresh
+</button>
+
+<div id="history"></div>
+
+</div>
+
+<script>
+
+async function loadHistory(){
+
+let html="";
+
+for(let i=1;i<=3;i++){
+
+html+=`
+
+<div class='card'>
+
+Result `+i+`
+
+</div>
+
+`;
+
+}
+
+document.getElementById("history").innerHTML=html;
+
+}
+
+</script>

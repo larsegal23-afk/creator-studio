@@ -1,0 +1,99 @@
+<h1>User Settings</h1>
+
+<div class="card">
+
+<h3>Account</h3>
+
+<p id="email">Email: loading...</p>
+
+<p id="coins">Coins: loading...</p>
+
+</div>
+
+
+<div class="card">
+
+<h3>Change Password</h3>
+
+<input id="newPass"
+type="password"
+placeholder="New password">
+
+<br><br>
+
+<button onclick="changePass()">
+
+Update Password
+
+</button>
+
+<div id="result"></div>
+
+</div>
+
+
+<script>
+
+async function loadSettings(){
+
+const res=
+await authFetch("/api/settings");
+
+const data=
+await res.json();
+
+document.getElementById("email")
+.innerText="Email: "+data.email;
+
+document.getElementById("coins")
+.innerText="Coins: "+data.coins;
+
+}
+
+async function changePass(){
+
+const pass=
+document.getElementById("newPass")
+.value;
+
+const res=
+await authFetch("/api/changePassword",{
+
+method:"POST",
+
+headers:{
+
+"Content-Type":"application/json"
+
+},
+
+body:JSON.stringify({
+
+password:pass
+
+})
+
+});
+
+const data=
+await res.json();
+
+if(data.success){
+
+document.getElementById("result")
+.innerHTML=
+
+"<p style='color:lightgreen'>Updated ✓</p>";
+
+}else{
+
+document.getElementById("result")
+.innerText="Error";
+
+}
+
+}
+
+loadSettings();
+
+</script>

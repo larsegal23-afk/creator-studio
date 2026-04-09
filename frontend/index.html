@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<!-- 🔥 MOBILE FIX -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Creator Studio</title>
+
+<link rel="stylesheet" href="css/ui.css">
+
+</head>
+
+<body>
+
+<div class="app">
+
+<!-- SIDEBAR -->
+
+<div class="sidebar">
+
+<h2 class="logo">⚡ Creator</h2>
+
+<button data-page="dashboard" onclick="navigate(this,'dashboard')">
+🏠 Dashboard
+</button>
+
+<button data-page="logo" onclick="navigate(this,'logo')">
+🎨 Logo
+</button>
+
+<button data-page="video" onclick="navigate(this,'video')">
+🎬 Video
+</button>
+
+<button data-page="stream" onclick="navigate(this,'stream')">
+📦 Stream Pack
+</button>
+
+<div class="spacer"></div>
+
+<button onclick="logout()" class="logout">
+🚪 Logout
+</button>
+
+</div>
+
+<!-- MAIN -->
+
+<div class="main">
+
+<!-- TOPBAR -->
+
+<div class="topbar">
+
+<div id="coinsTop">
+Coins: -
+</div>
+
+</div>
+
+<!-- CONTENT -->
+
+<div id="app" class="content loading">
+Loading...
+</div>
+
+</div>
+
+</div>
+
+<script src="js/tools.js"></script>
+<script src="js/router.js"></script>
+
+<script>
+
+/* ACTIVE SIDEBAR */
+
+function setActive(page){
+
+document
+.querySelectorAll(".sidebar button")
+.forEach(btn=>{
+
+btn.classList.remove("active");
+
+if(btn.dataset.page===page){
+btn.classList.add("active");
+}
+
+});
+
+}
+
+/* NAVIGATION */
+
+function navigate(el,page){
+
+setActive(page);
+
+loadPage(page);
+
+}
+
+/* DEFAULT */
+
+setTimeout(()=>{
+setActive("dashboard");
+},100);
+
+</script>
+
+</body>
+
+</html>

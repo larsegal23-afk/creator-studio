@@ -1,0 +1,25 @@
+<h1>Register</h1>
+
+<input id="u" placeholder="user">
+<br><br>
+<input id="p" type="password">
+<br><br>
+
+<button onclick="doReg()">Register</button>
+
+<script>
+
+async function doReg(){
+
+await register(
+
+document.getElementById("u").value,
+document.getElementById("p").value
+
+);
+
+showToast("registered");
+
+}
+
+</script>

@@ -1,0 +1,142 @@
+<h1>Coin History</h1>
+
+<p>Track your spending and usage.</p>
+
+<div class="card">
+
+<h3>Buy Coins</h3>
+
+<button onclick="buyCoins()">
+
+Buy 100 Coins (€5)
+
+</button>
+
+</div>
+
+
+<div class="card">
+
+<h3>Transactions</h3>
+
+<div id="coinList">
+
+Loading transactions...
+
+</div>
+
+</div>
+
+
+<script>
+
+/* LOAD COIN HISTORY */
+
+async function loadCoins(){
+
+const container =
+document.getElementById("coinList");
+
+container.innerHTML="Loading...";
+
+try{
+
+const res =
+await authFetch("/api/coins");
+
+const data =
+await res.json();
+
+let html="";
+
+/* EMPTY */
+
+if(data.length===0){
+
+container.innerHTML=
+"<p>No transactions yet</p>";
+
+return;
+
+}
+
+/* BUILD */
+
+data.forEach(c=>{
+
+html+=`
+
+<div class="card project">
+
+<h3>${c.action}</h3>
+
+<p>${c.details}</p>
+
+<p style="color:${c.coins<0?'#ff4d4d':'lightgreen'}">
+
+${c.coins} coins
+
+</p>
+
+<p style="opacity:0.6;font-size:13px">
+
+${c.created}
+
+</p>
+
+</div>
+
+`;
+
+});
+
+container.innerHTML=html;
+
+}catch(e){
+
+container.innerHTML=
+"<p style='color:red'>Error loading transactions</p>";
+
+}
+
+}
+
+
+/* BUY COINS */
+
+async function buyCoins(){
+
+try{
+
+const res =
+await authFetch("/api/buyCoins",{
+
+method:"POST"
+
+});
+
+const data =
+await res.json();
+
+/* REDIRECT TO STRIPE */
+
+if(data.url){
+
+window.location = data.url;
+
+}
+
+}catch(e){
+
+showToast("Payment error");
+
+}
+
+}
+
+
+/* INIT */
+
+loadCoins();
+
+</script>

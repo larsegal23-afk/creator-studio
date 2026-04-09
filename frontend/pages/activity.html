@@ -1,0 +1,97 @@
+<h1>Activity History</h1>
+
+<div class="card">
+
+<h3>Usage History</h3>
+
+<div id="activityList">
+
+Loading...
+
+</div>
+
+</div>
+
+
+<script>
+
+async function loadActivity(){
+
+const container =
+document.getElementById("activityList");
+
+container.innerHTML="Loading...";
+
+try{
+
+const res =
+await authFetch("/api/activity");
+
+const data =
+await res.json();
+
+let html="";
+
+if(data.length===0){
+
+container.innerHTML=`
+
+<div class="emptyState">
+
+<h3>No activity yet</h3>
+
+<p>Your recent actions will appear here</p>
+
+</div>
+
+`;
+
+return;
+
+}
+
+/* BUILD LIST */
+
+data.forEach(a=>{
+
+html+=`
+
+<div class="card project">
+
+<h3>${a.action}</h3>
+
+<p>${a.details}</p>
+
+<p style="color:#7c3aed">
+
+Coins: ${a.coins}
+
+</p>
+
+<p style="opacity:0.6;font-size:13px">
+
+${a.created}
+
+</p>
+
+</div>
+
+`;
+
+});
+
+container.innerHTML=html;
+
+}catch(e){
+
+container.innerHTML=
+
+"<p style='color:red'>Failed loading activity</p>";
+
+}
+
+}
+
+loadActivity();
+
+</script>

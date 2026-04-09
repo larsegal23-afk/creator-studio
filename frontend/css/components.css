@@ -1,0 +1,28 @@
+.card{
+background:#0d0d16;
+border:1px solid #1e293b;
+padding:20px;
+border-radius:14px;
+margin-bottom:20px;
+backdrop-filter:blur(6px);
+}
+
+.tool-grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:15px;
+}
+
+.tool{
+background:#0b0b14;
+border:1px solid #1e293b;
+padding:20px;
+border-radius:12px;
+cursor:pointer;
+transition:.2s;
+}
+
+.tool:hover{
+border-color:#7c3aed;
+transform:translateY(-3px);
+}

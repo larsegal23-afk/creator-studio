@@ -1,0 +1,19 @@
+/* UI components */
+
+.input{
+
+background:#0b0b14;
+border:1px solid #1f1f2e;
+padding:10px;
+border-radius:8px;
+color:white;
+
+}
+
+.tool-grid{
+
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+
+}

@@ -1,0 +1,142 @@
+<h1>Video Builder</h1>
+
+<div class="card">
+
+<h3>Create AI Video Script</h3>
+
+<input id="videoTopic"
+placeholder="Video Topic (e.g. Fortnite highlights)">
+
+<br><br>
+
+<button id="videoBtn"
+onclick="generateVideo()">
+
+Generate Video
+
+</button>
+
+<div id="videoResult"
+style="margin-top:20px;"></div>
+
+</div>
+
+<script>
+
+async function generateVideo(){
+
+const topic=document
+.getElementById("videoTopic")
+.value.trim();
+
+if(!topic){
+
+document
+.getElementById("videoResult")
+.innerHTML=
+
+"<p style='color:#ff4d4d'>Enter topic</p>";
+
+return;
+
+}
+
+const btn=document.getElementById("videoBtn");
+
+btn.disabled=true;
+btn.innerText="Generating...";
+
+document.getElementById("videoResult")
+.innerHTML="Processing AI...";
+
+/* 🔥 AI JOB */
+
+runAITool(
+
+"video",
+
+"Create a viral short-form video script about: "+topic+
+"\nInclude hook, scenes, pacing and ending.",
+
+async (file)=>{
+
+btn.disabled=false;
+btn.innerText="Generate Video";
+
+/* LOAD RESULT */
+
+try{
+
+const res=await fetch("/results/"+file);
+
+const text=await res.text();
+
+/* FORMAT OUTPUT */
+
+document.getElementById("videoResult")
+.innerHTML=`
+
+<div class="card">
+
+<h3>${topic}</h3>
+
+<pre style="white-space:pre-wrap">${text}</pre>
+
+<p style="color:#7c3aed">
+AI Video Script
+</p>
+
+<button onclick="saveVideo('${topic}')">
+Save Project
+</button>
+
+</div>
+
+`;
+
+/* UPDATE COINS */
+
+if(typeof loadUser==="function"){
+loadUser();
+}
+
+}catch{
+
+document.getElementById("videoResult")
+.innerHTML=
+
+"<p style='color:red'>Failed to load result</p>";
+
+}
+
+}
+
+);
+
+}
+
+/* SAVE */
+
+async function saveVideo(topic){
+
+await authFetch("/api/project",{
+
+method:"POST",
+
+body:JSON.stringify({
+
+name:topic,
+type:"video"
+
+})
+
+});
+
+document.getElementById("videoResult")
+.innerHTML+=
+
+"<p style='color:lightgreen'>Saved ✓</p>";
+
+}
+
+</script>

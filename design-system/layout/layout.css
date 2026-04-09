@@ -1,0 +1,16 @@
+.sidebar{
+
+width:230px;
+background:var(--panel2);
+height:100vh;
+position:fixed;
+padding:25px;
+
+}
+
+.main{
+
+margin-left:250px;
+padding:30px;
+
+}
