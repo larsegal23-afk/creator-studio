@@ -220,33 +220,6 @@ app.post("/api/generate-logo", requireAuth, async (req, res) => {
   }
 })
 
-/* ================================
-STRIPE CHECKOUT
-================================ */
-
-app.post("/api/create-checkout-session", requireAuth, async (req, res) => {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
-
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ["card"],
-    mode: "payment",
-    line_items: [{
-      price_data: {
-        currency: "eur",
-        product_data: { name: "100 Coins" },
-        unit_amount: 500
-      },
-      quantity: 1
-    }],
-    success_url: process.env.FRONTEND_BASE_URL + "/success.html",
-    cancel_url: process.env.FRONTEND_BASE_URL + "/cancel.html",
-    metadata: {
-      userId: req.user.uid
-    }
-  })
-
-  res.json({ url: session.url })
-})
 
 /* ================================
 START
