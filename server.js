@@ -10,12 +10,13 @@ dotenv.config()
 
 const app = express()
 
+/* ================================
+CORS
+================================ */
+
 const allowedOrigins = [
   process.env.FRONTEND_BASE_URL,
-  "https://logomakergermany-f2312.web.app",
-  "https://logomakergermany-f2312.firebaseapp.com",
-  "http://localhost:5500",
-  "http://127.0.0.1:5500"
+  "http://localhost:5500"
 ].filter(Boolean)
 
 app.use(cors({
@@ -27,10 +28,11 @@ app.use(cors({
   credentials: true
 }))
 
+/* ================================
+STRIPE WEBHOOK
+================================ */
 app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async (req, res) => {
   try {
-    if (!process.env.STRIPE_SECRET_KEY) return res.status(200).send("Stripe not configured")
-
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
       apiVersion: "2024-06-20"
     })
@@ -38,57 +40,109 @@ app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async
     const sig = req.headers["stripe-signature"]
     const secret = process.env.STRIPE_WEBHOOK_SECRET
 
-    if (!sig || !secret) return res.status(400).send("Missing webhook secret/signature")
-
     const event = stripe.webhooks.constructEvent(req.body, sig, secret)
 
-    return res.json({ received: true, type: event.type })
+    if (event.type === "checkout.session.completed") {
 
-  } catch (e) {
-    console.error("Webhook error:", e?.message || e)
-    return res.status(400).send("Webhook error")
+      const session = event.data.object
+
+      const userId = session.metadata.userId
+      const coins = parseInt(session.metadata.coins || "0")
+
+      console.log("PAYMENT SUCCESS:", userId, coins)
+
+      if (!userId || !coins) {
+        return res.json({ received: true })
+      }
+
+      const userRef = db.collection("users").doc(userId)
+
+      await db.runTransaction(async (t) => {
+        const snap = await t.get(userRef)
+
+        let currentCoins = 0
+        if (snap.exists) {
+          currentCoins = snap.data().coins || 0
+        }
+
+        const newCoins = currentCoins + coins
+
+        t.set(userRef, { coins: newCoins }, { merge: true })
+      })
+
+      console.log("Coins added:", coins)
+    }
+
+    res.json({ received: true })
+
+  } catch (err) {
+    console.error("Webhook error:", err.message)
+    res.status(400).send("Webhook error")
   }
 })
 
-app.use(express.json({ limit: "2mb" }))
+/* ================================
+RATE LIMIT
+================================ */
 
-const limiter = rateLimit({
-  windowMs: 60 * 1000,
+app.use("/api/", rateLimit({
+  windowMs: 60000,
   max: 20
-})
+}))
 
-app.use("/api/", limiter)
+/* ================================
+FIREBASE
+================================ */
 
 let db = null
 
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
   try {
-    if (!admin.apps.length) {
-     const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
 
-serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n')
+    serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n')
 
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-      })
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    })
 
-      db = admin.firestore()
-      console.log("Firebase Admin initialized")
-    }
+    db = admin.firestore()
+    console.log("Firebase ready")
+
   } catch (e) {
-    console.error("Firebase Admin init failed:", e?.message || e)
+    console.error("Firebase failed:", e)
   }
-} else {
-  console.log("Firebase disabled (no service account)")
 }
 
-const openai = process.env.OPENAI_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  : null
+/* ================================
+OPENAI
+================================ */
 
-app.get("/", (req, res) => {
-  res.status(200).send("OK")
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
 })
+
+/* ================================
+AUTH
+================================ */
+
+async function requireAuth(req, res, next) {
+  try {
+    const token = req.headers.authorization?.split(" ")[1]
+    if (!token) return res.status(401).json({ error: "No token" })
+
+    const decoded = await admin.auth().verifyIdToken(token)
+    req.user = decoded
+
+    next()
+  } catch {
+    res.status(401).json({ error: "Invalid token" })
+  }
+}
+
+/* ================================
+TEST
+================================ */
 
 app.get("/api/test", (req, res) => {
   res.json({
@@ -98,8 +152,160 @@ app.get("/api/test", (req, res) => {
   })
 })
 
-const PORT = process.env.PORT || 3000
+/* ================================
+INIT USER
+================================ */
 
-app.listen(PORT, () => {
-  console.log("Backend running on port", PORT)
+app.post("/api/init-user", requireAuth, async (req, res) => {
+  const ref = db.collection("users").doc(req.user.uid)
+
+  const snap = await ref.get()
+
+  if (!snap.exists) {
+    await ref.set({
+      coins: 20,
+      createdAt: Date.now()
+    })
+  }
+
+  res.json({ ok: true })
+})
+
+/* ================================
+GET COINS
+================================ */
+
+app.get("/api/get-coins", requireAuth, async (req, res) => {
+  const ref = db.collection("users").doc(req.user.uid)
+  const snap = await ref.get()
+
+  res.json({
+    coins: snap.data()?.coins || 0
+  })
+})
+
+/* ================================
+GENERATE LOGO
+================================ */
+
+app.post("/api/generate-logo", requireAuth, async (req, res) => {
+  try {
+    const { prompt } = req.body
+
+    const ref = db.collection("users").doc(req.user.uid)
+
+    await db.runTransaction(async (t) => {
+      const snap = await t.get(ref)
+      const coins = snap.data()?.coins || 0
+
+      if (coins < 5) throw new Error("NO_COINS")
+
+      t.update(ref, { coins: coins - 5 })
+    })
+
+    const result = await openai.images.generate({
+      model: "gpt-image-1",
+      prompt,
+      size: "1024x1024"
+    })
+
+    const img = result.data[0].b64_json
+
+    res.json({
+      image: `data:image/png;base64,${img}`
+    })
+
+  } catch (e) {
+    res.status(500).json({ error: e.message })
+  }
+})
+
+/* ================================
+STRIPE CHECKOUT
+================================ */
+
+app.post("/api/create-checkout-session", requireAuth, async (req, res) => {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    mode: "payment",
+    line_items: [{
+      price_data: {
+        currency: "eur",
+        product_data: { name: "100 Coins" },
+        unit_amount: 500
+      },
+      quantity: 1
+    }],
+    success_url: process.env.FRONTEND_BASE_URL + "/success.html",
+    cancel_url: process.env.FRONTEND_BASE_URL + "/cancel.html",
+    metadata: {
+      userId: req.user.uid
+    }
+  })
+
+  res.json({ url: session.url })
+})
+
+/* ================================
+START
+================================ */
+
+app.listen(process.env.PORT || 3000, () => {
+  console.log("Server running")
+})
+
+app.post("/api/create-checkout-session", requireAuth, async (req, res) => {
+  try {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2024-06-20"
+    })
+
+    const userId = req.user.uid
+
+    // 💰 Wähle Paket (du kannst später dynamisch machen)
+    const pack = req.body?.pack || "small"
+
+    const packs = {
+      small: { price: 500, coins: 100 },
+      medium: { price: 1200, coins: 300 },
+      large: { price: 2500, coins: 700 }
+    }
+
+    const selected = packs[pack]
+
+    if (!selected) {
+      return res.status(400).json({ error: "Invalid pack" })
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      line_items: [
+        {
+          price_data: {
+            currency: "eur",
+            product_data: {
+              name: `${selected.coins} Coins`
+            },
+            unit_amount: selected.price
+          },
+          quantity: 1
+        }
+      ],
+      success_url: process.env.FRONTEND_BASE_URL + "/dashboard.html",
+      cancel_url: process.env.FRONTEND_BASE_URL + "/dashboard.html",
+      metadata: {
+        userId,
+        coins: selected.coins
+      }
+    })
+
+    res.json({ url: session.url })
+
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: "Stripe failed" })
+  }
 })

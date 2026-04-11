@@ -1,146 +1,155 @@
-function getToken(){
+const API = "https://logomakergermany-ultimate-backend-production.up.railway.app"
 
-return localStorage.getItem("token");
+/* TOKEN */
+async function getToken(){
+  const user = firebase.auth().currentUser
 
+  if(!user){
+    window.location.href="/"
+    return null
+  }
+
+  return await user.getIdToken()
 }
-
 /* AUTH FETCH */
-
 async function authFetch(url,options={}){
+  const token = await getToken()
 
-const token=getToken();
+  if(!token) return
 
-if(!token){
+  options.headers={
+    ...(options.headers || {}),
+    "Authorization":"Bearer "+token,
+    "Content-Type":"application/json"
+  }
 
-window.location.href="/";
-return;
+  const res = await fetch(API + url,options)
+
+  if(res.status===401){
+    window.location.href="/"
+    return
+  }
+
+  return res
 }
 
-options.headers={
-...(options.headers || {}),
-"Authorization":"Bearer "+token,
-"Content-Type":"application/json"
-};
-
-const res=await fetch(url,options);
-
-/* AUTO LOGOUT */
-
-if(res.status===401){
-
-localStorage.removeItem("token");
-window.location.href="/";
-return;
+/* INIT USER */
+async function initUser(){
+  await authFetch("/api/init-user",{method:"POST"})
 }
 
-return res;
-
-}
-
-/* LOAD USER */
-
+/* LOAD USER DATA */
 async function loadUser(){
+  try{
+    const res = await authFetch("/api/user")
 
-try{
+    if(!res || !res.ok){
+      throw new Error()
+    }
 
-const res=
-await authFetch("/api/user");
+    const data = await res.json()
 
-if(!res || !res.ok){
+    updateUI(data)
 
-throw new Error();
-
+  }catch(e){
+    console.log("User load error:",e)
+    fallbackUI()
+  }
 }
 
-const data=
-await res.json();
+/* LOAD COINS */
+async function loadCoins(){
+  const res = await authFetch("/api/get-coins")
 
-/* DASHBOARD */
+  if(!res) return
 
-updateUI(data);
+  const data = await res.json()
 
-}catch(e){
-
-console.log("Dashboard error:",e);
-
-fallbackUI();
-
+  document.getElementById("coins").innerText =
+    "Coins: " + (data.coins ?? 0)
 }
 
+/* LOAD ACTIVITY */
+async function loadActivity(){
+  try{
+    const res = await authFetch("/api/activity")
+
+    if(!res || !res.ok){
+      throw new Error()
+    }
+
+    const data = await res.json()
+
+    let html=""
+
+    if(!data || data.length===0){
+      html="<p style='color:#9ca3af'>No activity yet</p>"
+      document.getElementById("activityList").innerHTML=html
+      return
+    }
+
+    data.forEach(a=>{
+      html+=`
+        <div class="card">
+          <p><b>${a.type || "Activity"}</b></p>
+          <p style="color:#9ca3af">${a.reference || ""}</p>
+          <p style="color:#7c3aed">
+            Coins: ${a.amount ?? 0}
+          </p>
+        </div>
+      `
+    })
+
+    document.getElementById("activityList").innerHTML=html
+
+  }catch(e){
+    document.getElementById("activityList").innerHTML =
+      "<p style='color:red'>Failed loading activity</p>"
+  }
+}
+
+/* BUY COINS (STRIPE) */
+async function buyCoins(){
+  const res = await authFetch("/api/create-checkout-session",{
+    method:"POST"
+  })
+
+  if(!res) return
+
+  const data = await res.json()
+
+  if(data.url){
+    window.location.href = data.url
+  }else{
+    alert("Payment error")
+  }
 }
 
 /* UPDATE UI */
-
 function updateUI(data){
+  const coinsText = "Coins: " + (data.coins ?? 0)
+  const projectsText = "Projects: " + (data.projects ?? 0)
 
-const coinsText=
-"Coins: "+(data.coins ?? 0);
+  document.getElementById("coins").innerText = coinsText
+  document.getElementById("projects").innerText = projectsText
 
-const projectsText=
-"Projects: "+(data.projects ?? 0);
-
-/* MAIN */
-
-const coins=
-document.getElementById("coins");
-
-if(coins){
-
-coins.innerText=coinsText;
-
-}
-
-const projects=
-document.getElementById("projects");
-
-if(projects){
-
-projects.innerText=projectsText;
-
-}
-
-/* TOP BAR */
-
-const top=
-document.getElementById("coinsTop");
-
-if(top){
-
-top.innerText=coinsText;
-
-}
-
+  const top = document.getElementById("coinsTop")
+  if(top){
+    top.innerText = coinsText
+  }
 }
 
 /* FALLBACK */
-
 function fallbackUI(){
-
-const coins=
-document.getElementById("coins");
-
-if(coins){
-
-coins.innerText="Coins: -";
-
+  document.getElementById("coins").innerText="Coins: -"
+  document.getElementById("projects").innerText="Projects: -"
 }
 
-const projects=
-document.getElementById("projects");
-
-if(projects){
-
-projects.innerText="Projects: -";
-
+/* INIT */
+async function initDashboard(){
+  await initUser()
+  await loadUser()
+  await loadActivity()
 }
 
-const top=
-document.getElementById("coinsTop");
-
-if(top){
-
-top.innerText="Coins: -";
-
-}
-
-}
+setTimeout(initDashboard,500)
