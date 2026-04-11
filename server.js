@@ -29,8 +29,9 @@ app.use(cors({
 }))
 
 /* ================================
-STRIPE WEBHOOK
+STRIPE WEBHOOK (RAW BODY!)
 ================================ */
+
 app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async (req, res) => {
   try {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -45,32 +46,24 @@ app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async
     if (event.type === "checkout.session.completed") {
 
       const session = event.data.object
-
       const userId = session.metadata.userId
       const coins = parseInt(session.metadata.coins || "0")
 
-      console.log("PAYMENT SUCCESS:", userId, coins)
+      if (userId && coins) {
+        const userRef = db.collection("users").doc(userId)
 
-      if (!userId || !coins) {
-        return res.json({ received: true })
+        await db.runTransaction(async (t) => {
+          const snap = await t.get(userRef)
+          const currentCoins = snap.exists ? (snap.data().coins || 0) : 0
+
+          t.set(userRef, {
+            coins: currentCoins + coins
+          }, { merge: true })
+        })
+
+        await logActivity(userId, "purchase", coins, "Stripe")
+        console.log("Coins added:", coins)
       }
-
-      const userRef = db.collection("users").doc(userId)
-
-      await db.runTransaction(async (t) => {
-        const snap = await t.get(userRef)
-
-        let currentCoins = 0
-        if (snap.exists) {
-          currentCoins = snap.data().coins || 0
-        }
-
-        const newCoins = currentCoins + coins
-
-        t.set(userRef, { coins: newCoins }, { merge: true })
-      })
-
-      console.log("Coins added:", coins)
     }
 
     res.json({ received: true })
@@ -80,6 +73,12 @@ app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async
     res.status(400).send("Webhook error")
   }
 })
+
+/* ================================
+JSON PARSER
+================================ */
+
+app.use(express.json({ limit: "2mb" }))
 
 /* ================================
 RATE LIMIT
@@ -100,7 +99,8 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
   try {
     const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
 
-    serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n')
+    serviceAccount.private_key =
+      serviceAccount.private_key.replace(/\\n/g, '\n')
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount)
@@ -129,7 +129,10 @@ AUTH
 async function requireAuth(req, res, next) {
   try {
     const token = req.headers.authorization?.split(" ")[1]
-    if (!token) return res.status(401).json({ error: "No token" })
+
+    if (!token) {
+      return res.status(401).json({ error: "No token" })
+    }
 
     const decoded = await admin.auth().verifyIdToken(token)
     req.user = decoded
@@ -158,7 +161,6 @@ INIT USER
 
 app.post("/api/init-user", requireAuth, async (req, res) => {
   const ref = db.collection("users").doc(req.user.uid)
-
   const snap = await ref.get()
 
   if (!snap.exists) {
@@ -185,6 +187,27 @@ app.get("/api/get-coins", requireAuth, async (req, res) => {
 })
 
 /* ================================
+ACTIVITY API
+================================ */
+
+app.get("/api/activity", requireAuth, async (req, res) => {
+  try {
+    const snap = await db.collection("activity")
+      .where("userId", "==", req.user.uid)
+      .orderBy("createdAt", "desc")
+      .limit(50)
+      .get()
+
+    const data = snap.docs.map(d => d.data())
+
+    res.json(data)
+
+  } catch (e) {
+    res.status(500).json({ error: "failed" })
+  }
+})
+
+/* ================================
 GENERATE LOGO
 ================================ */
 
@@ -203,6 +226,8 @@ app.post("/api/generate-logo", requireAuth, async (req, res) => {
       t.update(ref, { coins: coins - 5 })
     })
 
+    await logActivity(req.user.uid, "logo_generation", -5, prompt)
+
     const result = await openai.images.generate({
       model: "gpt-image-1",
       prompt,
@@ -220,14 +245,9 @@ app.post("/api/generate-logo", requireAuth, async (req, res) => {
   }
 })
 
-
 /* ================================
-START
+STRIPE CHECKOUT
 ================================ */
-
-app.listen(process.env.PORT || 3000, () => {
-  console.log("Server running")
-})
 
 app.post("/api/create-checkout-session", requireAuth, async (req, res) => {
   try {
@@ -236,8 +256,6 @@ app.post("/api/create-checkout-session", requireAuth, async (req, res) => {
     })
 
     const userId = req.user.uid
-
-    // 💰 Wähle Paket (du kannst später dynamisch machen)
     const pack = req.body?.pack || "small"
 
     const packs = {
@@ -255,18 +273,16 @@ app.post("/api/create-checkout-session", requireAuth, async (req, res) => {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
-      line_items: [
-        {
-          price_data: {
-            currency: "eur",
-            product_data: {
-              name: `${selected.coins} Coins`
-            },
-            unit_amount: selected.price
+      line_items: [{
+        price_data: {
+          currency: "eur",
+          product_data: {
+            name: `${selected.coins} Coins`
           },
-          quantity: 1
-        }
-      ],
+          unit_amount: selected.price
+        },
+        quantity: 1
+      }],
       success_url: process.env.FRONTEND_BASE_URL + "/dashboard.html",
       cancel_url: process.env.FRONTEND_BASE_URL + "/dashboard.html",
       metadata: {
@@ -281,4 +297,30 @@ app.post("/api/create-checkout-session", requireAuth, async (req, res) => {
     console.error(e)
     res.status(500).json({ error: "Stripe failed" })
   }
+})
+
+/* ================================
+ACTIVITY LOGGER
+================================ */
+
+async function logActivity(userId, type, amount = 0, reference = "") {
+  try {
+    await db.collection("activity").add({
+      userId,
+      type,
+      amount,
+      reference,
+      createdAt: Date.now()
+    })
+  } catch (e) {
+    console.error("Activity log failed:", e)
+  }
+}
+
+/* ================================
+START
+================================ */
+
+app.listen(process.env.PORT || 3000, () => {
+  console.log("Server running")
 })
