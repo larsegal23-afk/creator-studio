@@ -1,28 +1,48 @@
-.card{
-background:#0d0d16;
-border:1px solid #1e293b;
-padding:20px;
-border-radius:14px;
-margin-bottom:20px;
-backdrop-filter:blur(6px);
+.card {
+  background: #0d0d16;
+  border: 1px solid #1e293b;
+  padding: 20px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(6px);
+  box-shadow: var(--shadow);
 }
 
-.tool-grid{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:15px;
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
 }
 
-.tool{
-background:#0b0b14;
-border:1px solid #1e293b;
-padding:20px;
-border-radius:12px;
-cursor:pointer;
-transition:.2s;
+.tool {
+  background: #0b0b14;
+  border: 1px solid #1e293b;
+  padding: 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+  box-sizing: border-box;
 }
 
-.tool:hover{
-border-color:#7c3aed;
-transform:translateY(-3px);
+.tool:hover {
+  border-color: #7c3aed;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+}
+
+.tool:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1024px) {
+  .tool-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .tool-grid {
+    grid-template-columns: 1fr;
+  }
 }

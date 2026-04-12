@@ -1,260 +1,180 @@
-/* LOGIN CHECK */
+window.CreatorRoutes = {
+  dashboard: {
+    title: "Branding Studio",
+    copy: "Zentrale fuer Logo, Stream Pack, Video Builder und Systemstatus.",
+    protected: true,
+    init: () => window.initDashboardPage?.()
+  },
+  logo: {
+    title: "Mein Logo",
+    copy: "Namensfeld, Stil-DNA, Farben und grosses Logo-Fenster wie in deiner Vorlage.",
+    protected: true,
+    init: () => window.initLogoPage?.()
+  },
+  stream: {
+    title: "Logo + Stream Pack",
+    copy: "Auswahl fuer Facecam, Alerts, Layout und Sticker mit uebernommenem Stil.",
+    protected: true,
+    init: () => window.initStreamPage?.()
+  },
+  video: {
+    title: "Video Upload und Creator Builder",
+    copy: "Gameplay-Upload, Highlight Detection und Ausgabeformate in einer klaren Builder-Ansicht.",
+    protected: true,
+    init: () => window.initVideoPage?.()
+  },
+  system: {
+    title: "System",
+    copy: "Hintergrund, Deployment-Status und technische Uebersicht.",
+    protected: true,
+    init: () => window.initSystemPage?.()
+  },
+  login: {
+    title: "Login",
+    copy: "Firebase-Anmeldung fuer das Creator Studio.",
+    protected: false,
+    init: () => window.initLoginPage?.()
+  }
+};
 
-function isLogged(){
+window.getCurrentRoute = function getCurrentRoute() {
+  return window.__creatorCurrentRoute || "dashboard";
+};
 
-return !!localStorage.getItem("token");
+window.isLogged = function isLogged() {
+  return Boolean(localStorage.getItem("token"));
+};
 
-}
+window.renderSidebar = function renderSidebar(activeRoute) {
+  const sidebar = document.getElementById("sidebar");
 
-/* ROUTER */
+  if (!sidebar) {
+    return;
+  }
 
-async function loadPage(name){
+  const isAuthed = window.isLogged();
+  const navItems = [
+    { key: "dashboard", label: "Branding Studio", copy: "Cockpit und Uebersicht" },
+    { key: "logo", label: "Mein Logo", copy: "Logo und Brand-DNA" },
+    { key: "stream", label: "Stream Pack", copy: "Assets und Formate" },
+    { key: "video", label: "Video Builder", copy: "Upload und Clip-Plan" },
+    { key: "system", label: "System", copy: "Status und Hintergrund" }
+  ];
 
-/* AUTH PROTECT */
+  sidebar.innerHTML = `
+    <section class="brand-block">
+      <p class="brand-kicker">Creator Studio</p>
+      <h1 class="brand-title">Branding und Video in einer klaren Struktur.</h1>
+      <p class="brand-copy">Links die Module, rechts die Builder-Flaeche mit grossem Vorschaufenster wie in deinen Tabellen.</p>
+    </section>
 
-if(!isLogged() && name!=="login"){
+    <nav class="sidebar-nav">
+      ${navItems.map((item, index) => `
+        <button
+          class="nav-button ${activeRoute === item.key ? "active" : ""}"
+          type="button"
+          ${!isAuthed ? "disabled" : ""}
+          onclick="loadPage('${item.key}')"
+        >
+          <span class="nav-label">
+            <strong>${item.label}</strong>
+            <span>${item.copy}</span>
+          </span>
+          <span class="nav-index">0${index + 1}</span>
+        </button>
+      `).join("")}
+    </nav>
 
-name="login";
+    <div class="sidebar-footer">
+      <p>${isAuthed ? "Backend angebunden und Studio entsperrt." : "Bitte zuerst einloggen, damit Coins und Backend-Module aktiv sind."}</p>
+      ${isAuthed
+        ? '<button class="btn ghost" type="button" onclick="logout()">Logout</button>'
+        : '<button class="btn secondary" type="button" onclick="loadPage(\'login\')">Zum Login</button>'}
+    </div>
+  `;
+};
 
-}
+window.renderTopbar = function renderTopbar(routeName) {
+  const topbar = document.getElementById("topbar");
+  const route = window.CreatorRoutes[routeName] || window.CreatorRoutes.dashboard;
 
-try{
+  if (!topbar) {
+    return;
+  }
 
-const container=
-document.getElementById("app");
+  topbar.innerHTML = `
+    <div>
+      <h2 class="topbar-title">${route.title}</h2>
+      <p class="topbar-copy">${route.copy}</p>
+    </div>
+    <div class="topbar-right">
+      <div class="pill">Coins: <strong id="coinsTopValue">-</strong></div>
+      <div class="pill">${window.isLogged() ? "Live verbunden" : "Gastmodus"}</div>
+    </div>
+  `;
+};
 
-if(!container){
+window.handleLoggedOutState = function handleLoggedOutState() {
+  window.renderSidebar("login");
+  window.renderTopbar("login");
+  window.loadPage("login");
+};
 
-console.log("Router container missing");
+window.loadPage = async function loadPage(name) {
+  const requestedRoute = window.CreatorRoutes[name] ? name : "dashboard";
+  const route = window.CreatorRoutes[requestedRoute];
+  const targetRoute = route.protected && !window.isLogged() ? "login" : requestedRoute;
+  const target = window.CreatorRoutes[targetRoute];
+  const app = document.getElementById("app");
 
-return;
+  if (!app) {
+    return;
+  }
 
-}
+  window.__creatorCurrentRoute = targetRoute;
+  window.renderSidebar(targetRoute);
+  window.renderTopbar(targetRoute);
 
-/* SIDEBAR ACTIVE */
+  app.innerHTML = `
+    <div class="card">
+      <div class="loader"></div>
+    </div>
+  `;
 
-document
-.querySelectorAll("#sidebar button")
-.forEach(btn=>{
+  try {
+    const response = await fetch(`pages/${targetRoute}.html`);
+    if (!response.ok) {
+      throw new Error(`Page ${targetRoute} not found`);
+    }
 
-btn.classList.remove("active");
+    app.innerHTML = await response.text();
+    target.init?.();
 
-if(
-btn.innerText
-.toLowerCase()
-.includes(name)
-){
+    if (window.isLogged()) {
+      window.loadUser?.();
+    }
+  } catch (error) {
+    console.log("Route loading failed", error);
+    app.innerHTML = `
+      <div class="card">
+        <h2>Seite konnte nicht geladen werden</h2>
+        <p class="muted">Bitte pruefe die Projektdateien und lade die Route erneut.</p>
+      </div>
+    `;
+  }
+};
 
-btn.classList.add("active");
-
-}
-
+window.addEventListener("creator-auth-changed", async (event) => {
+  const nextRoute = event.detail?.user ? window.getCurrentRoute() : "login";
+  window.renderSidebar(nextRoute);
+  window.renderTopbar(nextRoute);
+  await window.loadPage(nextRoute === "login" && event.detail?.user ? "dashboard" : nextRoute);
 });
 
-/* LOADING */
-
-container.innerHTML=
-
-`<div class="card">
-
-<h3>Loading</h3>
-
-<div class="loader"></div>
-
-</div>`;
-
-/* FETCH */
-
-const res=
-await fetch(
-
-"pages/"+name+".html"
-
-);
-
-if(!res.ok){
-
-throw new Error();
-
-}
-
-const html=
-await res.text();
-
-/* INJECT */
-
-container.innerHTML=html;
-
-/* INIT */
-
-initPage(name);
-
-}catch(e){
-
-console.log("Router error:",e);
-
-document
-.getElementById("app")
-.innerHTML=
-
-`<div class="card">
-
-<h2>Page error</h2>
-
-<p>Could not load page</p>
-
-</div>`;
-
-}
-
-}
-
-/* PAGE INIT */
-
-function initPage(name){
-
-/* LOGIN */
-
-if(name==="login"){
-
-if(typeof initLoginPage==="function"){
-
-initLoginPage();
-
-}
-
-}
-
-/* DASHBOARD */
-
-if(name==="dashboard"){
-
-if(typeof loadUser==="function"){
-
-loadUser();
-
-}
-
-}
-
-/* PROJECTS */
-
-if(name==="projects"){
-
-if(typeof loadProjects==="function"){
-
-loadProjects();
-
-}
-
-}
-
-/* ACTIVITY */
-
-if(name==="activity"){
-
-if(typeof loadActivity==="function"){
-
-loadActivity();
-
-}
-
-}
-
-/* ADMIN */
-
-if(name==="admin"){
-
-if(typeof loadAdmin==="function"){
-
-loadAdmin();
-
-}
-
-if(typeof loadAnalytics==="function"){
-
-loadAnalytics();
-
-}
-
-}
-
-/* SETTINGS */
-
-if(name==="settings"){
-
-if(typeof loadSettings==="function"){
-
-loadSettings();
-
-}
-
-}
-
-/* VIDEO */
-
-if(name==="video"){
-
-console.log("Video ready");
-
-}
-
-/* LOGO */
-
-if(name==="logo"){
-
-console.log("Logo ready");
-
-}
-
-}
-
-/* AUTO START */
-
-window.addEventListener(
-
-"load",
-
-()=>{
-
-/* LOAD UI */
-
-if(typeof loadSidebar==="function"){
-loadSidebar();
-}
-
-if(typeof loadTopbar==="function"){
-loadTopbar();
-}
-
-/* ROUTE */
-
-if(isLogged()){
-
-loadPage("dashboard");
-
-}else{
-
-loadPage("login");
-
-}
-
-}
-);
-window.addEventListener("load",()=>{
-
-loadSidebar();
-
-loadTopbar();
-
-if(isLogged()){
-
-loadPage("dashboard");
-
-}else{
-
-loadPage("login");
-
-}
-
+window.addEventListener("load", async () => {
+  await window.firebaseAuthReady;
+  const startRoute = window.isLogged() ? "dashboard" : "login";
+  window.renderSidebar(startRoute);
+  window.renderTopbar(startRoute);
+  await window.loadPage(startRoute);
 });

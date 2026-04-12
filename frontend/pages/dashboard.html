@@ -1,56 +1,68 @@
-<h1>Welcome back</h1>
+<section class="page-stack">
+  <article class="hero-card">
+    <div class="hero-copy">
+      <p class="hero-kicker">Studio Cockpit</p>
+      <h1>Alle Creator-Bausteine auf einer sauberen Arbeitsflaeche.</h1>
+      <p>
+        Das Dashboard verbindet deine Tabellen-Idee mit einer klaren App-Struktur: Branding links starten, rechts Vorschau und unten Aktivitaeten und Projektkarten.
+      </p>
+      <div class="hero-actions">
+        <button class="btn" type="button" onclick="loadPage('logo')">Logo starten</button>
+        <button class="btn secondary" type="button" onclick="loadPage('video')">Video Builder</button>
+        <button class="btn secondary" type="button" onclick="loadPage('stream')">Stream Pack</button>
+      </div>
+    </div>
+    <div class="hero-visual"></div>
+  </article>
 
-<p style="color:#9ca3af;margin-bottom:20px;">
-Create, manage and track your AI projects.
-</p>
+  <section class="stats-grid">
+    <article class="stat-card">
+      <p class="muted">Coins</p>
+      <strong id="coinsValue" class="stat-value">-</strong>
+    </article>
+    <article class="stat-card">
+      <p class="muted">Lokale Projekte</p>
+      <strong id="projectsValue" class="stat-value">0</strong>
+    </article>
+    <article class="stat-card">
+      <p class="muted">Deployment</p>
+      <strong class="stat-value">Live</strong>
+    </article>
+  </section>
 
-<div class="grid">
+  <section class="grid">
+    <article class="card">
+      <div class="section-head">
+        <div>
+          <h2>Coins aufladen</h2>
+          <p class="muted">Direkter Stripe-Checkout ueber das Backend.</p>
+        </div>
+      </div>
+      <div class="actions-row">
+        <button class="btn" type="button" onclick="buyCoins('small')">100 Coins</button>
+        <button class="btn secondary" type="button" onclick="buyCoins('medium')">300 Coins</button>
+        <button class="btn secondary" type="button" onclick="buyCoins('large')">700 Coins</button>
+      </div>
+    </article>
 
-<!-- TOOLS -->
-<div class="card">
-<h3>Creator Tools</h3>
+    <article class="card">
+      <div class="section-head">
+        <div>
+          <h2>Projekt-Uebersicht</h2>
+          <p class="muted">Zuletzt erzeugte Builder-Karten und lokale Entwuerfe.</p>
+        </div>
+      </div>
+      <div id="projectOverview" class="tool-grid"></div>
+    </article>
+  </section>
 
-<p style="color:#9ca3af;margin-bottom:10px;">
-Start building your content
-</p>
-
-<button onclick="loadPage('logo')">🎨 Logo Creator</button>
-<button onclick="loadPage('video')">🎬 Video Builder</button>
-<button onclick="loadPage('stream')">📦 Stream Pack</button>
-</div>
-
-<!-- USER STATS -->
-<div class="card">
-<h3>Your Stats</h3>
-
-<p id="coins">Coins: loading...</p>
-<p id="projects">Projects: loading...</p>
-
-<small>Usage updates live</small>
-</div>
-
-<!-- BUY COINS -->
-<div class="card">
-<h3>Buy Coins</h3>
-
-<p style="color:#9ca3af;margin-bottom:10px;">
-Upgrade your creation power
-</p>
-
-<button onclick="buyCoins()">100 Coins — €5</button>
-<button onclick="buyCoins()">300 Coins — €12</button>
-<button onclick="buyCoins()">700 Coins — €25</button>
-</div>
-
-</div>
-
-<!-- ACTIVITY -->
-<div class="card">
-<h3>Recent Activity</h3>
-
-<div id="activityList">
-Loading activity...
-</div>
-</div>
-
-<script src="../js/dashboard.js"></script>
+  <article class="card">
+    <div class="section-head">
+      <div>
+        <h2>Letzte Aktivitaeten</h2>
+        <p class="muted">Direkt aus dem deployten Backend geladen.</p>
+      </div>
+    </div>
+    <div id="activityFeed" class="grid"></div>
+  </article>
+</section>

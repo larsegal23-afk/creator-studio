@@ -1,25 +1,7 @@
-<h1>Register</h1>
-
-<input id="u" placeholder="user">
-<br><br>
-<input id="p" type="password">
-<br><br>
-
-<button onclick="doReg()">Register</button>
-
-<script>
-
-async function doReg(){
-
-await register(
-
-document.getElementById("u").value,
-document.getElementById("p").value
-
-);
-
-showToast("registered");
-
-}
-
-</script>
+<section class="page-stack">
+  <article class="card">
+    <h2>Register</h2>
+    <p class="muted">Die Registrierung ist in dieser Release-Fassung nicht als eigener Frontend-Flow eingebunden.</p>
+    <button class="btn secondary" type="button" onclick="loadPage('login')">Zum Login</button>
+  </article>
+</section>

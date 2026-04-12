@@ -1,118 +1,80 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="de">
 <head>
-
-<meta charset="UTF-8">
-
-<!-- 🔥 MOBILE FIX -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Creator Studio</title>
-
-<link rel="stylesheet" href="css/ui.css">
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creator Studio</title>
+  <link rel="stylesheet" href="css/ui.css">
 </head>
-
 <body>
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar"></aside>
+    <main class="main-shell">
+      <header id="topbar" class="topbar"></header>
+      <section id="app" class="content"></section>
+    </main>
+  </div>
 
-<div class="app">
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<!-- SIDEBAR -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signInWithEmailAndPassword,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-<div class="sidebar">
+    const firebaseConfig = {
+      apiKey: "AIzaSyAzNqEXGDYnyyaxyi_dEkWR8ek3fsoMhFA",
+      authDomain: "logomakergermany-kreativtool.firebaseapp.com",
+      projectId: "logomakergermany-kreativtool"
+    };
 
-<h2 class="logo">⚡ Creator</h2>
+    const firebaseApp = initializeApp(firebaseConfig);
+    const auth = getAuth(firebaseApp);
 
-<button data-page="dashboard" onclick="navigate(this,'dashboard')">
-🏠 Dashboard
-</button>
+    window.firebaseAuthApi = {
+      async login(email, password) {
+        const credential = await signInWithEmailAndPassword(auth, email, password);
+        const token = await credential.user.getIdToken(true);
+        localStorage.setItem("token", token);
+        return credential.user;
+      },
+      async logout() {
+        await signOut(auth);
+        localStorage.removeItem("token");
+      },
+      async getToken(forceRefresh = false) {
+        if (!auth.currentUser) {
+          return localStorage.getItem("token");
+        }
 
-<button data-page="logo" onclick="navigate(this,'logo')">
-🎨 Logo
-</button>
+        const token = await auth.currentUser.getIdToken(forceRefresh);
+        localStorage.setItem("token", token);
+        return token;
+      }
+    };
 
-<button data-page="video" onclick="navigate(this,'video')">
-🎬 Video
-</button>
+    window.firebaseAuthReady = new Promise((resolve) => {
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          const token = await user.getIdToken();
+          localStorage.setItem("token", token);
+        } else {
+          localStorage.removeItem("token");
+        }
 
-<button data-page="stream" onclick="navigate(this,'stream')">
-📦 Stream Pack
-</button>
+        resolve(user);
+        window.dispatchEvent(new CustomEvent("creator-auth-changed", { detail: { user } }));
+      });
+    });
+  </script>
 
-<div class="spacer"></div>
-
-<button onclick="logout()" class="logout">
-🚪 Logout
-</button>
-
-</div>
-
-<!-- MAIN -->
-
-<div class="main">
-
-<!-- TOPBAR -->
-
-<div class="topbar">
-
-<div id="coinsTop">
-Coins: -
-</div>
-
-</div>
-
-<!-- CONTENT -->
-
-<div id="app" class="content loading">
-Loading...
-</div>
-
-</div>
-
-</div>
-
-<script src="js/tools.js"></script>
-<script src="js/router.js"></script>
-
-<script>
-
-/* ACTIVE SIDEBAR */
-
-function setActive(page){
-
-document
-.querySelectorAll(".sidebar button")
-.forEach(btn=>{
-
-btn.classList.remove("active");
-
-if(btn.dataset.page===page){
-btn.classList.add("active");
-}
-
-});
-
-}
-
-/* NAVIGATION */
-
-function navigate(el,page){
-
-setActive(page);
-
-loadPage(page);
-
-}
-
-/* DEFAULT */
-
-setTimeout(()=>{
-setActive("dashboard");
-},100);
-
-</script>
-
+  <script src="js/tools.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/login.js"></script>
+  <script src="js/router.js"></script>
 </body>
-
 </html>

@@ -1,16 +1,19 @@
-.sidebar{
-
-width:230px;
-background:var(--panel2);
-height:100vh;
-position:fixed;
-padding:25px;
-
+.sidebar {
+  width: 230px;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding: 25px;
+  background: var(--panel2);
+  box-sizing: border-box;
+  overflow-y: auto;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.main{
-
-margin-left:250px;
-padding:30px;
-
+.main {
+  margin-left: 250px;
+  padding: 30px;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
