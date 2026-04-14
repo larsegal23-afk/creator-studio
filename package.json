@@ -1,0 +1,23 @@
+{
+  "name": "creatorstudio-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "*",
+    "dotenv": "*",
+    "express": "*",
+    "express-rate-limit": "*",
+    "ffmpeg-static": "*",
+    "ffprobe-static": "*",
+    "firebase-admin": "*",
+    "multer": "*",
+    "openai": "*",
+    "stripe": "*",
+    "tesseract.js": "*"
+  }
+}
