@@ -1,228 +1,173 @@
-<h1>Logo Creator</h1>
+<section class="page-stack">
+  <article class="card">
+    <div class="section-head">
+      <div>
+        <h2>Branding Studio</h2>
+        <p class="muted">Felder fuer Name, Clan/Agent, Spiel, Stil und Mehrfachfarben.</p>
+      </div>
+    </div>
 
-<div class="card">
+    <div class="builder-grid">
+      <div class="page-stack">
+        <div class="form-grid">
+          <div class="field">
+            <label>Name</label>
+            <input id="logoName" class="input" type="text" placeholder="Enter your name">
+          </div>
 
-<h3>Generate AI Logo</h3>
+          <div class="field">
+            <label>Clan</label>
+            <input id="logoClan" class="input" type="text" placeholder="Enter your clan name">
+          </div>
 
-<input id="brandName"
-placeholder="Brand Name">
+          <div class="field">
+            <label>Game</label>
+            <select id="logoGame" title="Select a game">
+              <option value="">-</option>
+              <option>Fortnite</option>
+              <option>Call of Duty</option>
+              <option>Valorant</option>
+            </select>
+          </div>
 
-<br><br>
+          <div class="field">
+            <label>Style</label>
+            <select id="logoStyle" title="Select a style">
+              <option value="">-</option>
+              <option>Anime</option>
+              <option>Esports</option>
+              <option>Fantasy</option>
+              <option>Cyber</option>
+            </select>
+          </div>
+        </div>
 
-<button id="genBtn"
-onclick="generateLogo()">
+        <div class="actions-row">
+          <button id="generateLogoBtn" class="btn">Generate Logo</button>
+          <button id="reuseDnaBtn" class="btn secondary">DNA laden</button>
+        </div>
 
-<button onclick="window.open('/api/download/'+lastJobId)">
-Download Logo
-</button>
+        <!-- 🔥 NEU -->
+        <div class="actions-row">
+          <button id="genBanner" class="btn secondary">Banner</button>
+          <button id="genSticker" class="btn secondary">Sticker</button>
+          <button id="genFrame" class="btn secondary">Frame</button>
+        </div>
+      </div>
 
-Generate Logo
-
-</button>
-
-<div id="result"
-style="margin-top:20px;"></div>
-
-</div>
-
-<div id="dnaList" style="margin-top:20px;"></div>
+      <aside class="preview-pane">
+        <div id="logoPreviewFrame" class="preview-frame">
+          <div class="preview-placeholder">Hier erscheint dein Logo</div>
+        </div>
+      </aside>
+    </div>
+  </article>
+</section>
 
 <script>
-
-/* GENERATE LOGO */
-
-async function generateLogo(){
-
-const name=document
-.getElementById("brandName")
-.value.trim();
-
-if(!name){
-
-document.getElementById("result")
-.innerHTML=
-"<p style='color:#ff4d4d'>Enter brand name</p>";
-
-return;
-
-}
-
-const btn=document.getElementById("genBtn");
-
-btn.disabled=true;
-btn.innerText="Generating...";
-
-document.getElementById("result")
-.innerHTML="Creating logo...";
-
-runAITool(
-
-"branding",
-
-"Create a modern esports logo for "+name+
-". Clean, bold, dark background, high contrast, centered icon.",
-
-async (file)=>{
-
-btn.disabled=false;
-btn.innerText="Generate Logo";
-
-/* SHOW IMAGE */
-
-document.getElementById("result")
-.innerHTML=`
-
-<div class="card">
-
-<h3>${name}</h3>
-
-<img src="/results/${file}"
-style="max-width:300px;border-radius:10px;" />
-
-<p style="color:#7c3aed">
-AI Generated Logo
-</p>
-
-<button onclick="saveProject('${name}','branding')">
-Save Project
-</button>
-
-</div>
-
+function buildMagicPrompt(data) {
+  return `
+ultra detailed cinematic esports logo,
+logo text: "${data.name}",
+${data.clan ? "clan " + data.clan : ""}
+${data.game ? "inspired by " + data.game : ""}
+${data.style ? data.style + " style" : ""}
+high contrast, glowing effects, 4k, sharp details
 `;
-
-/* UPDATE USER */
-
-if(typeof loadUser==="function"){
-loadUser();
 }
 
-/* 🔥 RELOAD DNA */
+// 🔥 LOGO GENERIEREN
+document.getElementById("generateLogoBtn").onclick = async () => {
+  const data = {
+    name: document.getElementById("logoName").value,
+    clan: document.getElementById("logoClan").value,
+    game: document.getElementById("logoGame").value,
+    style: document.getElementById("logoStyle").value
+  };
 
-loadDNA();
+  if (!data.name) return alert("Name fehlt");
 
+  const prompt = buildMagicPrompt(data);
+
+  const response = await window.authFetch("/api/generate-logo", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      prompt,
+      requestId: `logo-inline-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    })
+  });
+
+  if (!response || !response.ok) {
+    alert("Fehler");
+    await window.loadUser?.();
+    return;
+  }
+
+  const result = await response.json().catch(() => null);
+  if (!result || !result.image) {
+    alert("Fehler");
+    await window.loadUser?.();
+    return;
+  }
+
+  document.getElementById("logoPreviewFrame").innerHTML =
+    `<img src="${result.image}" style="width:100%">`;
+
+  localStorage.setItem("lastLogoDNA", JSON.stringify({ ...data, prompt }));
+  await window.loadUser?.();
+};
+
+// 🔥 DNA LADEN
+document.getElementById("reuseDnaBtn").onclick = () => {
+  const dna = JSON.parse(localStorage.getItem("lastLogoDNA"));
+  if (!dna) return alert("Keine DNA");
+
+  document.getElementById("logoName").value = dna.name || "";
+  document.getElementById("logoClan").value = dna.clan || "";
+  document.getElementById("logoGame").value = dna.game || "";
+  document.getElementById("logoStyle").value = dna.style || "";
+};
+
+// 🔥 EXTRAS
+async function generateExtra(type) {
+ const dna = JSON.parse(localStorage.getItem("lastLogoDNA"));
+  if (!dna) return alert("Erst Logo erstellen!");
+
+  let prompt = dna.prompt;
+
+  if (type === "banner") prompt += ", wide banner";
+  if (type === "sticker") prompt += ", sticker";
+  if (type === "frame") prompt += ", webcam frame";
+
+  const response = await window.authFetch("/api/generate-logo", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      prompt,
+      requestId: `logo-extra-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    })
+  });
+
+  if (!response || !response.ok) {
+    alert("Fehler");
+    await window.loadUser?.();
+    return;
+  }
+
+  const result = await response.json().catch(() => null);
+  if (!result || !result.image) {
+    alert("Fehler");
+    await window.loadUser?.();
+    return;
+  }
+
+  document.getElementById("logoPreviewFrame").innerHTML =
+    `<img src="${result.image}" style="width:100%">`;
+  await window.loadUser?.();
 }
 
-);
-
-}
-
-/* LOAD DNA */
-
-async function loadDNA(){
-
-const res=await authFetch("/api/dna");
-
-if(!res){
-return;
-}
-
-const data=await res.json();
-
-let html="<h3>Your Brand DNA</h3>";
-
-if(!data || data.length===0){
-
-html+="<p>No DNA yet</p>";
-
-document.getElementById("dnaList").innerHTML=html;
-return;
-
-}
-
-data.forEach(d=>{
-
-html+=`
-
-<div class="card">
-
-<p><b>${d.name}</b></p>
-
-<p style="font-size:12px">${d.prompt}</p>
-
-<button onclick="reuseDNA('${encodeURIComponent(d.prompt)}')">
-Reuse Style
-</button>
-
-</div>
-
-`;
-
-});
-
-document.getElementById("dnaList").innerHTML=html;
-
-}
-
-/* REUSE DNA */
-
-function reuseDNA(encodedPrompt){
-
-const prompt=decodeURIComponent(encodedPrompt);
-
-const btn=document.getElementById("genBtn");
-
-btn.disabled=true;
-btn.innerText="Generating...";
-
-document.getElementById("result")
-.innerHTML="Using saved style...";
-
-runAITool(
-
-"branding",
-
-prompt,
-
-(file)=>{
-
-btn.disabled=false;
-btn.innerText="Generate Logo";
-
-document.getElementById("result")
-.innerHTML+=
-
-`<p style="color:#7c3aed">
-Generated from saved DNA
-</p>`;
-
-if(typeof loadUser==="function"){
-loadUser();
-}
-
-}
-
-);
-
-}
-
-/* SAVE PROJECT */
-
-async function saveProject(name,type){
-
-await authFetch("/api/project",{
-
-method:"POST",
-
-body:JSON.stringify({
-name,
-type
-})
-
-});
-
-document.getElementById("result")
-.innerHTML+=
-"<p style='color:lightgreen'>Saved ✓</p>";
-
-}
-
-/* INIT */
-
-setTimeout(()=>{
-
-loadDNA();
-
-},100);
-
+document.getElementById("genBanner").onclick = () => generateExtra("banner");
+document.getElementById("genSticker").onclick = () => generateExtra("sticker");
+document.getElementById("genFrame").onclick = () => generateExtra("frame");
 </script>

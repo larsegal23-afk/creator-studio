@@ -1,142 +1,86 @@
-<h1>Video Builder</h1>
+<section class="page-stack">
+  <article class="card">
+    <div class="section-head">
+      <div>
+        <h2>Video Upload und Creator Video Builder</h2>
+        <p class="muted">MP4, MOV und MKV Upload mit Highlight Detection und Ausgabeformaten nach deinem Tabellenbild.</p>
+      </div>
+    </div>
 
-<div class="card">
+    <div class="builder-grid">
+      <div class="page-stack">
+        <div class="upload-zone">
+          <div>
+            <h3>Gameplay Video hochladen</h3>
+            <p class="muted">Maximal aktuell als Planungsmodul hinterlegt. Uploadformate: MP4, MOV, MKV.</p>
+            <input id="videoFile" type="file" accept=".mp4,.mov,.mkv,video/mp4,video/quicktime,video/x-matroska">
+            <p id="videoFileMeta" class="muted">Noch kein Video ausgewaehlt</p>
+          </div>
+        </div>
 
-<h3>Create AI Video Script</h3>
+        <div class="field">
+          <label for="videoTitle">Projekt- oder Titelname</label>
+          <input id="videoTitle" class="input" type="text" placeholder="Zum Beispiel Fortnite Highlight Reel">
+        </div>
 
-<input id="videoTopic"
-placeholder="Video Topic (e.g. Fortnite highlights)">
+        <div class="field">
+          <label>Highlight Detection</label>
+          <div class="option-grid">
+            <label class="selection-card"><input type="checkbox" name="highlightType" value="Action Scenes"><span><strong>Action Scenes</strong><span>Schnelle Kampfszenen</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="highlightType" value="Kills"><span><strong>Kills</strong><span>Frags und Eliminations</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="highlightType" value="Wins"><span><strong>Wins</strong><span>Victory und Endmomente</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="highlightType" value="Funny Moments"><span><strong>Funny Moments</strong><span>Memes und Fail Clips</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="highlightType" value="Loud Audio Peaks"><span><strong>Loud Audio Peaks</strong><span>Lautstaerke-Events</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="highlightType" value="Fast Movement"><span><strong>Fast Movement</strong><span>Movement und Rush</span></span></label>
+          </div>
+        </div>
 
-<br><br>
+        <div class="field">
+          <label>Video Format</label>
+          <div class="option-grid">
+            <label class="selection-card"><input type="checkbox" name="outputFormat" value="TikTok 9:16"><span><strong>TikTok 9:16</strong><span>Shortform vertikal</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="outputFormat" value="YouTube Shorts"><span><strong>YouTube Shorts</strong><span>Mobile Shorts</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="outputFormat" value="Instagram Reels"><span><strong>Instagram Reels</strong><span>Creator Social Clip</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="outputFormat" value="YouTube 16:9"><span><strong>YouTube 16:9</strong><span>Landscape Edit</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="outputFormat" value="Twitch Highlight"><span><strong>Twitch Highlight</strong><span>Replay und Highlight Roll</span></span></label>
+          </div>
+        </div>
 
-<button id="videoBtn"
-onclick="generateVideo()">
+        <div class="actions-row">
+          <button id="analyzeVideoBtn" class="btn" type="button">1) Highlights erkennen</button>
+          <button id="generateVideoBtn" class="btn secondary" type="button">2) Short Video erstellen</button>
+        </div>
 
-Generate Video
+        <article id="detectedHighlightsCard" class="card" style="margin-top: 12px;">
+          <div class="section-head">
+            <div>
+              <h3>Erkannte Highlights (Abhak-System)</h3>
+              <p class="muted">Klicke die Szenen an, die ins finale Kurzvideo sollen.</p>
+            </div>
+          </div>
+          <div id="detectedHighlightsList" class="empty-state">
+            Noch keine Highlights erkannt. Starte zuerst "Highlights erkennen".
+          </div>
+        </article>
+      </div>
 
-</button>
+      <aside class="preview-pane">
+        <div class="section-head">
+          <div>
+            <h3>Thumbnail / Mini Player</h3>
+            <p class="muted">Vorschau auf Auswahl, Übergänge im Logo-Style und Export-Status.</p>
+          </div>
+        </div>
+        <div id="videoPreviewFrame" class="preview-frame">
+          <div class="preview-placeholder">
+            Nach der Dateiauswahl wird hier der Builder-Status und die naechste Produktionsstufe vorbereitet.
+          </div>
+        </div>
+      </aside>
+    </div>
+  </article>
 
-<div id="videoResult"
-style="margin-top:20px;"></div>
-
-</div>
-
-<script>
-
-async function generateVideo(){
-
-const topic=document
-.getElementById("videoTopic")
-.value.trim();
-
-if(!topic){
-
-document
-.getElementById("videoResult")
-.innerHTML=
-
-"<p style='color:#ff4d4d'>Enter topic</p>";
-
-return;
-
-}
-
-const btn=document.getElementById("videoBtn");
-
-btn.disabled=true;
-btn.innerText="Generating...";
-
-document.getElementById("videoResult")
-.innerHTML="Processing AI...";
-
-/* 🔥 AI JOB */
-
-runAITool(
-
-"video",
-
-"Create a viral short-form video script about: "+topic+
-"\nInclude hook, scenes, pacing and ending.",
-
-async (file)=>{
-
-btn.disabled=false;
-btn.innerText="Generate Video";
-
-/* LOAD RESULT */
-
-try{
-
-const res=await fetch("/results/"+file);
-
-const text=await res.text();
-
-/* FORMAT OUTPUT */
-
-document.getElementById("videoResult")
-.innerHTML=`
-
-<div class="card">
-
-<h3>${topic}</h3>
-
-<pre style="white-space:pre-wrap">${text}</pre>
-
-<p style="color:#7c3aed">
-AI Video Script
-</p>
-
-<button onclick="saveVideo('${topic}')">
-Save Project
-</button>
-
-</div>
-
-`;
-
-/* UPDATE COINS */
-
-if(typeof loadUser==="function"){
-loadUser();
-}
-
-}catch{
-
-document.getElementById("videoResult")
-.innerHTML=
-
-"<p style='color:red'>Failed to load result</p>";
-
-}
-
-}
-
-);
-
-}
-
-/* SAVE */
-
-async function saveVideo(topic){
-
-await authFetch("/api/project",{
-
-method:"POST",
-
-body:JSON.stringify({
-
-name:topic,
-type:"video"
-
-})
-
-});
-
-document.getElementById("videoResult")
-.innerHTML+=
-
-"<p style='color:lightgreen'>Saved ✓</p>";
-
-}
-
-</script>
+  <article id="videoPlanResult" class="card">
+    <div class="empty-state">Nach dem Upload und der Auswahl der Formate erscheint hier dein Builder-Plan.</div>
+  </article>
+</section>

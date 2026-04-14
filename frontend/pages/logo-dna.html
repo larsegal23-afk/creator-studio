@@ -1,0 +1,81 @@
+<section class="page-stack">
+  <article class="card">
+    <div class="section-head">
+      <div>
+        <h2>Logo DNA System</h2>
+        <p class="muted">Erzeuge ein klares Markenprofil mit Archetyp, Tonalitaet und Prompt-Blueprint.</p>
+      </div>
+    </div>
+
+    <div class="builder-grid">
+      <div class="page-stack">
+        <div class="form-grid">
+          <div class="field">
+            <label>Brand Name</label>
+            <input id="dnaBrandName" class="input" type="text" placeholder="z. B. ShadowPeak">
+          </div>
+          <div class="field">
+            <label>Archetyp</label>
+            <select id="dnaArchetype" title="Archetyp">
+              <option value="warrior">Warrior</option>
+              <option value="guardian">Guardian</option>
+              <option value="visionary">Visionary</option>
+              <option value="phantom">Phantom</option>
+              <option value="royal">Royal</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Branche/Game</label>
+            <input id="dnaDomain" class="input" type="text" placeholder="Esports, SaaS, Creator, Valorant ...">
+          </div>
+          <div class="field">
+            <label>Icon-Motiv</label>
+            <input id="dnaSymbol" class="input" type="text" placeholder="Wolf, Krone, Falcon, Schild ...">
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label>Energie (1-10)</label>
+            <input id="dnaEnergy" class="input" type="range" min="1" max="10" value="7">
+          </div>
+          <div class="field">
+            <label>Minimalismus (1-10)</label>
+            <input id="dnaMinimalism" class="input" type="range" min="1" max="10" value="6">
+          </div>
+          <div class="field">
+            <label>Farbstaerke (1-10)</label>
+            <input id="dnaColorForce" class="input" type="range" min="1" max="10" value="8">
+          </div>
+          <div class="field">
+            <label>Typografie-Haerte (1-10)</label>
+            <input id="dnaTypography" class="input" type="range" min="1" max="10" value="7">
+          </div>
+        </div>
+
+        <div class="actions-row">
+          <button id="buildDnaBtn" class="btn" type="button">DNA analysieren</button>
+          <button id="saveDnaBlueprintBtn" class="btn secondary" type="button">Blueprint speichern</button>
+          <button id="pushDnaToLogoBtn" class="btn secondary" type="button">In Logo Builder uebernehmen</button>
+        </div>
+      </div>
+
+      <aside class="preview-pane">
+        <div id="dnaPreviewPanel" class="dna-preview">
+          <div class="preview-placeholder">Dein Logo-DNA Profil erscheint hier nach der Analyse.</div>
+        </div>
+      </aside>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="section-head">
+      <div>
+        <h3>DNA Bibliothek</h3>
+        <p class="muted">Gespeicherte Blueprints koennen sofort wieder geladen und wiederverwendet werden.</p>
+      </div>
+      <button id="exportDnaLibraryBtn" class="btn secondary" type="button">Bibliothek exportieren</button>
+    </div>
+    <div id="logoDnaLibraryList" class="page-stack"></div>
+  </article>
+</section>

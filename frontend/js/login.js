@@ -1,138 +1,63 @@
-async function login(){
+window.initLoginPage = function initLoginPage() {
+  const form = document.getElementById("loginForm");
+  const passwordInput = document.getElementById("password");
 
-const email=document
-.getElementById("email")
-.value
-.trim()
-.toLowerCase();
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await window.login();
+  });
 
-const password=document
-.getElementById("password")
-.value;
+  passwordInput?.addEventListener("keydown", async (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      await window.login();
+    }
+  });
+};
 
-if(!email || !password){
+window.login = async function login() {
+  const email = document.getElementById("email")?.value.trim().toLowerCase() || "";
+  const password = document.getElementById("password")?.value || "";
+  const button = document.getElementById("loginBtn");
+  const hint = document.getElementById("loginHint");
 
-showToast(
-"Enter email and password",
-"error"
-);
+  if (!email || !password) {
+    window.showToast("Bitte Email und Passwort eingeben.", "error");
+    return;
+  }
 
-return;
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Anmeldung laeuft...";
+  }
 
-}
+  if (hint) {
+    hint.textContent = "Verbindung zu Firebase wird aufgebaut...";
+  }
 
-const btn=
-document.getElementById("loginBtn");
+  try {
+    await window.firebaseAuthReady;
+    await window.firebaseAuthApi.login(email, password);
+    await window.authFetch("/api/init-user", { method: "POST" });
 
-if(btn){
+    if (hint) {
+      hint.textContent = "Login erfolgreich. Studio wird geladen...";
+    }
 
-btn.disabled=true;
+    await window.loadPage("dashboard");
+    window.showToast("Willkommen im Creator Studio.");
+  } catch (error) {
+    console.log("Login failed", error);
 
-btn.innerText="Logging in...";
+    if (hint) {
+      hint.textContent = "Login fehlgeschlagen. Bitte Zugangsdaten pruefen.";
+    }
 
-}
-
-try{
-
-const res=
-await fetch(
-"/api/login",
-{
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-
-email,
-password
-
-})
-
-}
-);
-
-/* STATUS CHECK */
-
-if(!res.ok){
-
-throw new Error();
-
-}
-
-const data=
-await res.json();
-
-/* SUCCESS */
-
-if(data?.success && data?.token){
-
-localStorage.setItem(
-"token",
-data.token
-);
-
-/* BETTER NAVIGATION */
-
-loadPage("dashboard");
-
-return;
-
-}
-
-showToast(
-data?.error || "Login failed",
-"error"
-);
-
-}catch(e){
-
-showToast(
-"Server error",
-"error"
-);
-
-}
-
-/* ALWAYS RESET BUTTON */
-
-if(btn){
-
-btn.disabled=false;
-
-btn.innerText="Login";
-
-}
-
-}
-
-/* ENTER LOGIN */
-
-function initLoginPage(){
-
-const passwordInput=
-document.getElementById("password");
-
-if(passwordInput){
-
-passwordInput.addEventListener(
-
-"keypress",
-
-(e)=>{
-
-if(e.key==="Enter"){
-
-login();
-
-}
-
-}
-
-);
-
-}
-
-}
+    window.showToast("Login fehlgeschlagen.", "error");
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "Login";
+    }
+  }
+};

@@ -1,21 +1,39 @@
-<h1>Login</h1>
+<section class="page-stack">
+  <article class="hero-card">
+    <div class="hero-copy">
+      <p class="hero-kicker">Creator Zugang</p>
+      <h1>Login fuer dein Branding- und Video-Studio.</h1>
+      <p>
+        Nach dem Login werden Coins, Activity Feed und die echte Logo-Generierung ueber dein deploytes Backend geladen.
+      </p>
+    </div>
+    <div class="hero-visual"></div>
+  </article>
 
-<div class="card">
+  <article class="card" style="max-width: 560px;">
+    <div class="section-head">
+      <div>
+        <h2>Anmelden</h2>
+        <p class="muted">Firebase-Login mit direkter Backend-Initialisierung.</p>
+      </div>
+    </div>
 
-<input id="email" placeholder="Email">
+    <form id="loginForm" class="form-grid">
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" class="input" type="email" placeholder="name@studio.de" autocomplete="email">
+      </div>
 
-<br><br>
+      <div class="field">
+        <label for="password">Passwort</label>
+        <input id="password" class="input" type="password" placeholder="Passwort" autocomplete="current-password">
+      </div>
 
-<input id="password" type="password" placeholder="Password">
+      <div class="actions-row">
+        <button id="loginBtn" class="btn" type="submit">Login</button>
+      </div>
+    </form>
 
-<br><br>
-
-<button id="loginBtn" onclick="login()">
-
-Login
-
-</button>
-
-<div id="result" style="color:#ff4d4d;margin-top:10px;"></div>
-
-</div>
+    <p id="loginHint" class="muted">Bitte mit deinem vorhandenen Firebase-Account anmelden.</p>
+  </article>
+</section>

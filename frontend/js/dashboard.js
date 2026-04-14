@@ -1,146 +1,128 @@
-function getToken(){
+window.loadUser = async function loadUser() {
+  const response = await window.authFetch("/api/get-coins");
+  const coinValue = document.getElementById("coinsValue");
+  const coinTop = document.getElementById("coinsTopValue");
+  const projectValue = document.getElementById("projectsValue");
 
-return localStorage.getItem("token");
+  if (!response || !response.ok) {
+    if (coinValue) {
+      coinValue.textContent = "-";
+    }
+    if (coinTop) {
+      coinTop.textContent = "-";
+    }
+    if (projectValue) {
+      projectValue.textContent = String(JSON.parse(localStorage.getItem("creatorStudio.projects") || "[]").length || 0);
+    }
+    return;
+  }
 
-}
+  const payload = await response.json();
+  const projects = JSON.parse(localStorage.getItem("creatorStudio.projects") || "[]");
 
-/* AUTH FETCH */
+  if (coinValue) {
+    coinValue.textContent = String(payload.coins ?? 0);
+  }
 
-async function authFetch(url,options={}){
+  if (coinTop) {
+    coinTop.textContent = String(payload.coins ?? 0);
+  }
 
-const token=getToken();
-
-if(!token){
-
-window.location.href="/";
-return;
-}
-
-options.headers={
-...(options.headers || {}),
-"Authorization":"Bearer "+token,
-"Content-Type":"application/json"
+  if (projectValue) {
+    projectValue.textContent = String(projects.length);
+  }
 };
 
-const res=await fetch(url,options);
+window.loadActivityFeed = async function loadActivityFeed() {
+  const container = document.getElementById("activityFeed");
+  if (!container) {
+    return;
+  }
 
-/* AUTO LOGOUT */
+  const response = await window.authFetch("/api/activity");
 
-if(res.status===401){
+  if (!response || !response.ok) {
+    container.innerHTML = `
+      <div class="empty-state">
+        Aktivitaeten konnten gerade nicht geladen werden.
+      </div>
+    `;
+    return;
+  }
 
-localStorage.removeItem("token");
-window.location.href="/";
-return;
-}
+  const entries = await response.json();
 
-return res;
+  if (!entries.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        Noch keine Aktivitaeten vorhanden. Starte mit dem ersten Logo oder Streampack.
+      </div>
+    `;
+    return;
+  }
 
-}
+  container.innerHTML = entries.map((entry) => `
+    <article class="activity-item">
+      <div class="section-head">
+        <div>
+          <h3>${window.escapeHtml(entry.type || "Aktivitaet")}</h3>
+          <p class="muted">${window.escapeHtml(entry.reference || "Ohne Referenz")}</p>
+        </div>
+        <strong>${entry.amount ?? 0} Coins</strong>
+      </div>
+    </article>
+  `).join("");
+};
 
-/* LOAD USER */
+window.buyCoins = async function buyCoins(pack) {
+  const response = await window.authFetch("/api/create-checkout-session", {
+    method: "POST",
+    body: JSON.stringify({ pack })
+  });
 
-async function loadUser(){
+  if (!response || !response.ok) {
+    window.showToast("Checkout konnte nicht gestartet werden.", "error");
+    return;
+  }
 
-try{
+  const payload = await response.json();
 
-const res=
-await authFetch("/api/user");
+  if (!payload?.url) {
+    window.showToast("Keine Checkout-URL vom Backend erhalten.", "error");
+    return;
+  }
 
-if(!res || !res.ok){
+  window.location.href = payload.url;
+};
 
-throw new Error();
+window.renderProjectOverview = function renderProjectOverview() {
+  const container = document.getElementById("projectOverview");
+  if (!container) {
+    return;
+  }
 
-}
+  const projects = JSON.parse(localStorage.getItem("creatorStudio.projects") || "[]");
 
-const data=
-await res.json();
+  if (!projects.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        Noch keine lokalen Projektkarten gespeichert. Sobald du im Builder arbeitest, tauchen sie hier auf.
+      </div>
+    `;
+    return;
+  }
 
-/* DASHBOARD */
+  container.innerHTML = projects.slice(0, 6).map((project) => `
+    <article class="tool-card">
+      <h3>${window.escapeHtml(project.name)}</h3>
+      <p class="muted">${window.escapeHtml(project.type)}</p>
+      <p>${window.escapeHtml(project.summary || "Ohne Zusammenfassung")}</p>
+    </article>
+  `).join("");
+};
 
-updateUI(data);
-
-}catch(e){
-
-console.log("Dashboard error:",e);
-
-fallbackUI();
-
-}
-
-}
-
-/* UPDATE UI */
-
-function updateUI(data){
-
-const coinsText=
-"Coins: "+(data.coins ?? 0);
-
-const projectsText=
-"Projects: "+(data.projects ?? 0);
-
-/* MAIN */
-
-const coins=
-document.getElementById("coins");
-
-if(coins){
-
-coins.innerText=coinsText;
-
-}
-
-const projects=
-document.getElementById("projects");
-
-if(projects){
-
-projects.innerText=projectsText;
-
-}
-
-/* TOP BAR */
-
-const top=
-document.getElementById("coinsTop");
-
-if(top){
-
-top.innerText=coinsText;
-
-}
-
-}
-
-/* FALLBACK */
-
-function fallbackUI(){
-
-const coins=
-document.getElementById("coins");
-
-if(coins){
-
-coins.innerText="Coins: -";
-
-}
-
-const projects=
-document.getElementById("projects");
-
-if(projects){
-
-projects.innerText="Projects: -";
-
-}
-
-const top=
-document.getElementById("coinsTop");
-
-if(top){
-
-top.innerText="Coins: -";
-
-}
-
-}
+window.initDashboardPage = async function initDashboardPage() {
+  await window.loadUser();
+  await window.loadActivityFeed();
+  window.renderProjectOverview();
+};

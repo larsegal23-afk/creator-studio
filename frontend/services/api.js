@@ -1,100 +1,26 @@
-/* API BASE */
+window.api = async function api(path, options = {}) {
+  try {
+    const response = await fetch(`${window.APP_CONFIG.apiBase}${path}`, options);
+    if (!response.ok) {
+      throw new Error(`Request failed: ${response.status}`);
+    }
 
-const API="";
-
-/* BASIC FETCH */
-
-async function api(
-
-url,
-
-options={}
-
-){
-
-try{
-
-const res=
-await fetch(
-
-API+url,
-
-options
-
-);
-
-if(!res.ok){
-
-throw new Error();
-
-}
-
-try{
-
-return await res.json();
-
-}catch{
-
-return null;
-
-}
-
-}catch(e){
-
-console.log("API error");
-
-return null;
-
-}
-
-}
-
-/* STATUS */
-
-async function status(){
-
-return await api(
-
-"/api/status"
-
-);
-
-}
-
-/* AUTH FETCH */
-
-async function apiAuth(
-
-url,
-
-options={}
-
-){
-
-const token=
-localStorage.getItem("token");
-
-options.headers={
-
-"Content-Type":"application/json",
-
-...(options.headers||{}),
-
-...(token?{
-
-Authorization:
-"Bearer "+token
-
-}:{})
-
+    return await response.json().catch(() => null);
+  } catch (error) {
+    console.log("API error", error);
+    return null;
+  }
 };
 
-return await api(
+window.apiAuth = async function apiAuth(path, options = {}) {
+  const response = await window.authFetch(path, options);
+  if (!response) {
+    return null;
+  }
 
-url,
+  return await response.json().catch(() => null);
+};
 
-options
-
-);
-
-}
+window.status = async function status() {
+  return await window.api("/api/test");
+};
