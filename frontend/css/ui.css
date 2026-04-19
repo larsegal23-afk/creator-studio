@@ -55,6 +55,7 @@ button {
   display: grid;
   grid-template-columns: 290px 1fr;
   min-height: 100vh;
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
 
@@ -193,6 +194,7 @@ button {
   padding: 18px 28px;
   border-bottom: 1px solid var(--border);
   background: rgba(7, 11, 21, 0.82);
+  -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
 }
 
@@ -658,7 +660,7 @@ button:hover {
 
   .sidebar {
     position: relative;
-    min-height: auto;
+    min-height: unset;
   }
 
   .hero-card,

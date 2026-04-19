@@ -1,5 +1,5 @@
 window.loadUser = async function loadUser() {
-  const response = await window.authFetch("/api/get-coins");
+  const response = await window.authfetch("https://logomakergermany-ultimate-backend-production.up.railway.app/api/get-coins");
   const coinValue = document.getElementById("coinsValue");
   const coinTop = document.getElementById("coinsTopValue");
   const projectValue = document.getElementById("projectsValue");

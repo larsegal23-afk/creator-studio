@@ -1,13 +1,13 @@
 window.CreatorRoutes = {
   dashboard: {
     title: "Branding Studio",
-    copy: "Zentrale fuer Logo, Stream Pack, Video Builder und Systemstatus.",
+    copy: "Zentrale fuer Logo, Stream Pack, Video Builder.",
     protected: true,
     init: () => window.initDashboardPage?.()
   },
   logo: {
     title: "Mein Logo",
-    copy: "Namensfeld, Stil-DNA, Farben und grosses Logo-Fenster wie in deiner Vorlage.",
+    copy: "Namensfeld, Stil-DNA.",
     protected: true,
     init: () => window.initLogoPage?.()
   },
@@ -19,16 +19,11 @@ window.CreatorRoutes = {
   },
   video: {
     title: "Video Upload und Creator Builder",
-    copy: "Gameplay-Upload, Highlight Detection und Ausgabeformate in einer klaren Builder-Ansicht.",
+    copy: "Gameplay-Upload, Highlight Detection.",
     protected: true,
     init: () => window.initVideoPage?.()
   },
-  system: {
-    title: "System",
-    copy: "Hintergrund, Deployment-Status und technische Uebersicht.",
-    protected: true,
-    init: () => window.initSystemPage?.()
-  },
+
   login: {
     title: "Login",
     copy: "Firebase-Anmeldung fuer das Creator Studio.",
@@ -58,7 +53,7 @@ window.renderSidebar = function renderSidebar(activeRoute) {
     { key: "logo", label: "Mein Logo", copy: "Logo und Brand-DNA" },
     { key: "stream", label: "Stream Pack", copy: "Assets und Formate" },
     { key: "video", label: "Video Builder", copy: "Upload und Clip-Plan" },
-    { key: "system", label: "System", copy: "Status und Hintergrund" }
+   
   ];
 
   sidebar.innerHTML = `

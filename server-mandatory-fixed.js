@@ -1,0 +1,521 @@
+import express from "express"
+import cors from "cors"
+import dotenv from "dotenv"
+import admin from "firebase-admin"
+import Stripe from "stripe"
+import rateLimit from "express-rate-limit"
+
+dotenv.config()
+
+const app = express()
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder")
+
+// Basic middleware - STRICT CORS
+app.use(cors({
+  origin: [
+    "http://localhost:5500", 
+    "http://127.0.0.1:5500",
+    "https://logomakergermany-kreativtool.web.app"
+  ],
+  credentials: true
+}))
+app.use(express.json())
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 500,
+  standardHeaders: true,
+  legacyHeaders: false
+})
+
+const useCoinsLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20
+})
+
+app.use("/api/", limiter)
+app.use("/api/use-coins", useCoinsLimiter)
+
+// Firebase initialization - NO FALLBACKS
+let db = null
+try {
+  if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY) {
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+    
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: privateKey
+      })
+    })
+    db = admin.firestore()
+    console.log("Firebase initialized")
+  }
+} catch (error) {
+  console.log("Firebase initialization error:", error.message)
+}
+
+// Auth middleware
+const requireAuth = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '')
+    
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" })
+    }
+
+    if (db) {
+      const decoded = await admin.auth().verifyIdToken(token)
+      req.user = decoded
+    } else {
+      // Fallback for testing without Firebase
+      req.user = { uid: "test-user", email: "test@example.com" }
+    }
+    next()
+  } catch (error) {
+    console.log("Auth error:", error.message)
+    res.status(401).json({ error: "Invalid token" })
+  }
+}
+
+// Get coins endpoint
+app.get("/api/get-coins", requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.uid
+    
+    if (!db) {
+      return res.status(503).json({ error: "Database not available" })
+    }
+    
+    const userRef = db.collection("users").doc(userId)
+    const userDoc = await userRef.get()
+    
+    if (!userDoc.exists) {
+      // Create new user with 0 coins - MUST PURCHASE
+      await userRef.set({
+        email: req.user.email,
+        coins: 0,
+        createdAt: new Date(),
+        lastLogin: new Date()
+      })
+      console.log(`Created new user ${userId} with 0 coins - must purchase`)
+      res.json({ coins: 0 })
+    } else {
+      const userData = userDoc.data()
+      const currentCoins = userData.coins || 0
+      
+      // Update last login
+      await userRef.update({
+        lastLogin: new Date()
+      })
+      
+      console.log(`User ${userId} has ${currentCoins} coins`)
+      res.json({ coins: currentCoins })
+    }
+  } catch (error) {
+    console.error("Get coins error:", error)
+    res.status(500).json({ error: "Failed to get coins" })
+  }
+})
+
+// Generate logo - MANDATORY 5 COINS SERVER SIDE
+app.post("/api/generate-logo", requireAuth, async (req, res) => {
+  try {
+    const { prompt, requestId } = req.body
+    const userId = req.user.uid
+
+    if (!prompt) {
+      return res.status(400).json({ error: "No prompt provided" })
+    }
+
+    // MANDATORY: Check and deduct 5 coins SERVER SIDE
+    const userRef = db.collection("users").doc(userId)
+    const userDoc = await userRef.get()
+    
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: "User not found" })
+    }
+
+    const currentCoins = userDoc.data().coins || 0
+    const requiredCoins = 5
+
+    if (currentCoins < requiredCoins) {
+      return res.status(402).json({ 
+        error: "Not enough coins",
+        required: requiredCoins,
+        current: currentCoins 
+      })
+    }
+
+    // DEDUCT COINS SERVER SIDE
+    await db.runTransaction(async (transaction) => {
+      transaction.update(userRef, {
+        coins: currentCoins - requiredCoins,
+        lastActivity: new Date()
+      })
+
+      // Log transaction
+      await db.collection("transactions").add({
+        userId,
+        type: "use",
+        amount: -requiredCoins,
+        description: `Logo generation: ${requestId}`,
+        createdAt: new Date()
+      })
+    })
+
+    console.log(`Deducted ${requiredCoins} coins from user ${userId} for logo generation`)
+    
+    // Simulate logo generation
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    
+    const mockImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+    
+    res.json({ 
+      image: mockImage,
+      requestId: requestId,
+      status: "completed",
+      coinsUsed: requiredCoins,
+      remainingCoins: currentCoins - requiredCoins
+    })
+
+  } catch (error) {
+    console.error("Generate logo error:", error)
+    res.status(500).json({ error: "Failed to generate logo" })
+  }
+})
+
+// Create stream pack - MANDATORY 15 COINS SERVER SIDE
+app.post("/api/create-stream-pack", requireAuth, async (req, res) => {
+  try {
+    const { brandName, assets, format } = req.body
+    const userId = req.user.uid
+
+    if (!brandName) {
+      return res.status(400).json({ error: "No brand name provided" })
+    }
+
+    // MANDATORY: Check and deduct 15 coins SERVER SIDE
+    const userRef = db.collection("users").doc(userId)
+    const userDoc = await userRef.get()
+    
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: "User not found" })
+    }
+
+    const currentCoins = userDoc.data().coins || 0
+    const requiredCoins = 15
+
+    if (currentCoins < requiredCoins) {
+      return res.status(402).json({ 
+        error: "Not enough coins",
+        required: requiredCoins,
+        current: currentCoins 
+      })
+    }
+
+    // DEDUCT COINS SERVER SIDE
+    await db.runTransaction(async (transaction) => {
+      transaction.update(userRef, {
+        coins: currentCoins - requiredCoins,
+        lastActivity: new Date()
+      })
+
+      // Log transaction
+      await db.collection("transactions").add({
+        userId,
+        type: "use",
+        amount: -requiredCoins,
+        description: `Stream pack creation: ${brandName}`,
+        createdAt: new Date()
+      })
+    })
+
+    console.log(`Deducted ${requiredCoins} coins from user ${userId} for stream pack`)
+    
+    // Simulate stream pack creation
+    await new Promise(resolve => setTimeout(resolve, 3000))
+    
+    res.json({ 
+      success: true,
+      brandName: brandName,
+      assets: assets || ['Facecam Rahmen', 'Alerts', 'Layout'],
+      format: format || '16:9',
+      status: "completed",
+      coinsUsed: requiredCoins,
+      remainingCoins: currentCoins - requiredCoins
+    })
+
+  } catch (error) {
+    console.error("Stream pack error:", error)
+    res.status(500).json({ error: "Failed to create stream pack" })
+  }
+})
+
+// Process video - MANDATORY 10 COINS PER MINUTE SERVER SIDE
+app.post("/api/process-video", requireAuth, async (req, res) => {
+  try {
+    const { videoLength, videoUrl } = req.body
+    const userId = req.user.uid
+
+    if (!videoLength || videoLength <= 0) {
+      return res.status(400).json({ error: "Invalid video length" })
+    }
+
+    // Calculate coins: 1 minute = 10 coins
+    const coinsPerMinute = 10
+    const requiredCoins = Math.ceil(videoLength / 60) * coinsPerMinute
+
+    // MANDATORY: Check and deduct coins SERVER SIDE
+    const userRef = db.collection("users").doc(userId)
+    const userDoc = await userRef.get()
+    
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: "User not found" })
+    }
+
+    const currentCoins = userDoc.data().coins || 0
+
+    if (currentCoins < requiredCoins) {
+      return res.status(402).json({ 
+        error: "Not enough coins",
+        required: requiredCoins,
+        current: currentCoins 
+      })
+    }
+
+    // DEDUCT COINS SERVER SIDE
+    await db.runTransaction(async (transaction) => {
+      transaction.update(userRef, {
+        coins: currentCoins - requiredCoins,
+        lastActivity: new Date()
+      })
+
+      // Log transaction
+      await db.collection("transactions").add({
+        userId,
+        type: "use",
+        amount: -requiredCoins,
+        description: `Video processing: ${videoLength}s`,
+        createdAt: new Date()
+      })
+    })
+
+    console.log(`Deducted ${requiredCoins} coins from user ${userId} for video processing`)
+
+    res.json({ 
+      success: true, 
+      coinsUsed: requiredCoins,
+      videoLength: videoLength,
+      message: "Video processing started",
+      remainingCoins: currentCoins - requiredCoins
+    })
+
+  } catch (error) {
+    console.error("Video processing error:", error)
+    res.status(500).json({ error: "Failed to process video" })
+  }
+})
+
+// Export to TikTok - MANDATORY 5 COINS SERVER SIDE
+app.post("/api/export-tiktok", requireAuth, async (req, res) => {
+  try {
+    const { videoId, title, hashtags } = req.body
+    const userId = req.user.uid
+
+    // MANDATORY: Check and deduct 5 coins SERVER SIDE
+    const userRef = db.collection("users").doc(userId)
+    const userDoc = await userRef.get()
+    
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: "User not found" })
+    }
+
+    const currentCoins = userDoc.data().coins || 0
+    const requiredCoins = 5
+
+    if (currentCoins < requiredCoins) {
+      return res.status(402).json({ 
+        error: "Not enough coins",
+        required: requiredCoins,
+        current: currentCoins 
+      })
+    }
+
+    // DEDUCT COINS SERVER SIDE
+    await db.runTransaction(async (transaction) => {
+      transaction.update(userRef, {
+        coins: currentCoins - requiredCoins,
+        lastActivity: new Date()
+      })
+
+      // Log transaction
+      await db.collection("transactions").add({
+        userId,
+        type: "use",
+        amount: -requiredCoins,
+        description: `TikTok export: ${videoId}`,
+        createdAt: new Date()
+      })
+    })
+
+    console.log(`Deducted ${requiredCoins} coins from user ${userId} for TikTok export`)
+
+    res.json({ 
+      success: true, 
+      coinsUsed: requiredCoins,
+      videoId: videoId,
+      tiktokUrl: `https://tiktok.com/@creatorstudio/video/${videoId}`,
+      message: "Video exported to TikTok",
+      remainingCoins: currentCoins - requiredCoins
+    })
+
+  } catch (error) {
+    console.error("TikTok export error:", error)
+    res.status(500).json({ error: "Failed to export to TikTok" })
+  }
+})
+
+// Create checkout session
+app.post("/api/create-checkout-session", requireAuth, async (req, res) => {
+  try {
+    const { pack } = req.body
+
+    const packages = {
+      starter: { name: "50 Coins", amount: 499, coins: 50 },
+      small: { name: "50 Coins", amount: 499, coins: 50 },
+      professional: { name: "150 Coins", amount: 1499, coins: 150 },
+      enterprise: { name: "500 Coins", amount: 4999, coins: 500 }
+    }
+
+    const selectedPack = packages[pack]
+    if (!selectedPack) {
+      return res.status(400).json({ error: "Invalid package" })
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: [{
+        name: selectedPack.name,
+        description: `${selectedPack.coins} Coins`,
+        images: [],
+        amount: selectedPack.amount,
+        currency: "eur",
+        quantity: 1
+      }],
+      success_url: `${process.env.FRONTEND_BASE_URL || "http://localhost:5500"}/success.html`,
+      cancel_url: `${process.env.FRONTEND_BASE_URL || "http://localhost:5500"}/cancel.html`,
+      metadata: {
+        userId: req.user.uid,
+        coins: selectedPack.coins
+      }
+    })
+    
+    res.json({ url: session.url })
+  } catch (error) {
+    console.error("Checkout error:", error)
+    res.status(500).json({ error: "Failed to create checkout session" })
+  }
+})
+
+// Stripe webhook for successful payments
+app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+  try {
+    const sig = req.headers["stripe-signature"]
+    
+    // For testing without webhook secret
+    if (process.env.STRIPE_WEBHOOK_SECRET?.includes("placeholder")) {
+      console.log("Webhook received (test mode)")
+      return res.json({ received: true })
+    }
+    
+    const event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET)
+    
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object
+      const userId = session.metadata.userId
+      const coins = parseInt(session.metadata.coins)
+      
+      if (userId && coins && db) {
+        // Add coins to user account
+        const userRef = db.collection("users").doc(userId)
+        await userRef.set({
+          coins: admin.firestore.FieldValue.increment(coins),
+          lastUpdated: new Date()
+        }, { merge: true })
+        
+        // Log transaction
+        await db.collection("transactions").add({
+          userId,
+          amount,
+          reason: reason || "Manual addition",
+          timestamp: new Date()
+        })
+        
+        console.log(`Added ${coins} coins to user ${userId}`)
+      }
+    }
+    
+    res.json({ received: true })
+  } catch (error) {
+    console.error("Webhook error:", error)
+    res.status(500).json({ error: "Webhook processing failed" })
+  }
+})
+
+// Add coins endpoint (for testing and manual adjustments)
+app.post("/api/add-coins", requireAuth, async (req, res) => {
+  try {
+    const { amount, reason } = req.body
+    const userId = req.user.uid
+    
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: "Invalid amount" })
+    }
+    
+    if (!db) {
+      return res.status(503).json({ error: "Database not available" })
+    }
+    
+    // ADMIN PROTECTION
+    if (req.user.email !== "logomakergermany@gmail.com") {
+      return res.status(403).json({ error: "Not allowed" })
+    }
+    
+    const userRef = db.collection("users").doc(userId)
+    await userRef.set({
+      coins: admin.firestore.FieldValue.increment(amount),
+      lastUpdated: new Date()
+    }, { merge: true })
+    
+    // Log transaction
+    await db.collection("transactions").add({
+      userId,
+      amount,
+      reason: reason || "Manual addition",
+      timestamp: new Date()
+    })
+    
+    console.log(`Added ${amount} coins to user ${userId}`)
+    res.json({ success: true, amount })
+  } catch (error) {
+    console.error("Add coins error:", error)
+    res.status(500).json({ error: "Failed to add coins" })
+  }
+})
+
+// Health check
+app.get("/api/health", (req, res) => {
+  res.json({ 
+    status: "ok", 
+    timestamp: new Date().toISOString(),
+    firebase: db ? "connected" : "disconnected"
+  })
+})
+
+// Start server
+app.listen(process.env.PORT || 3000, () => {
+  console.log("Server running on port", process.env.PORT || 3000)
+})
