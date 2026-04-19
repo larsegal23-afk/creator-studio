@@ -1,0 +1,92 @@
+<section class="page-stack">
+  <article class="hero-card">
+    <div class="hero-copy">
+      <p class="hero-kicker">Dashboard</p>
+      <h1>Willkommen im Creator Studio</h1>
+      <p>
+        Erstelle professionelle Logos, Stream-Packs und Video-Content mit KI-Unterstützung.
+      </p>
+    </div>
+    <div class="hero-visual"></div>
+  </article>
+
+  <article class="card">
+    <div class="section-head">
+      <div>
+        <h2>Deine Coins</h2>
+        <p class="muted">Aktueller Coin-Stand und schnelle Aktionen.</p>
+      </div>
+    </div>
+    
+    <div class="esports-grid esports-grid-3">
+      <div class="stat">
+        <h3 id="coinsValue">0</h3>
+        <p class="muted">Coins</p>
+      </div>
+      <div class="stat">
+        <h3 id="projectsValue">0</h3>
+        <p class="muted">Projekte</p>
+      </div>
+      <div class="stat">
+        <h3>Pro</h3>
+        <p class="muted">Status</p>
+      </div>
+    </div>
+    
+    <div class="action-buttons">
+      <button class="btn primary" onclick="loadPage('billing')">
+        <span class="btn-icon">Coins</span>
+        Coins aufladen
+      </button>
+      <button class="btn secondary" onclick="loadPage('logo')">
+        <span class="btn-icon">Logo</span>
+        Logo erstellen
+      </button>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="section-head">
+      <div>
+        <h2>Tools</h2>
+        <p class="muted">Wähle dein nächstes Projekt.</p>
+      </div>
+    </div>
+    
+    <div class="tool-grid">
+      <div class="tool" onclick="loadPage('logo')">
+        <span class="tool-icon">Logo</span>
+        <h3>Logo Builder</h3>
+        <p class="muted">Professionelle Esports Logos erstellen</p>
+      </div>
+      <div class="tool" onclick="loadPage('stream')">
+        <span class="tool-icon">Stream</span>
+        <h3>Stream Pack</h3>
+        <p class="muted">Komplette Stream-Assets erstellen</p>
+      </div>
+      <div class="tool" onclick="loadPage('video')">
+        <span class="tool-icon">Video</span>
+        <h3>Video Builder</h3>
+        <p class="muted">Video-Verarbeitung und Highlights</p>
+      </div>
+      <div class="tool" onclick="loadPage('billing')">
+        <span class="tool-icon">Coins</span>
+        <h3>Coins</h3>
+        <p class="muted">Coins aufladen und verwalten</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="section-head">
+      <div>
+        <h2>Letzte Projekte</h2>
+        <p class="muted">Deine kürzlich erstellten Inhalte.</p>
+      </div>
+    </div>
+    
+    <div id="recentProjects" class="esports-grid">
+      <!-- Projects will be loaded here -->
+    </div>
+  </article>
+</section>

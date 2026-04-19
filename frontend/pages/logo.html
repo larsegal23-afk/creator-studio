@@ -1,173 +1,101 @@
-<section class="page-stack">
-  <article class="card">
-    <div class="section-head">
-      <div>
-        <h2>Branding Studio</h2>
-        <p class="muted">Felder fuer Name, Clan/Agent, Spiel, Stil und Mehrfachfarben.</p>
-      </div>
-    </div>
+<section class="sheet-page">
+  <article class="sheet-card">
+    <header class="sheet-header-row">
+      <div>Logo</div>
+      <div>Branding</div>
+      <div>Branding studio</div>
+      <div>Account</div>
+      <div>Coins</div>
+    </header>
 
-    <div class="builder-grid">
-      <div class="page-stack">
-        <div class="form-grid">
-          <div class="field">
-            <label>Name</label>
-            <input id="logoName" class="input" type="text" placeholder="Enter your name">
-          </div>
+    <div class="sheet-layout">
+      <aside class="sheet-left-nav">
+        <button class="sheet-nav-item active" type="button">Logo Builder</button>
+        <button class="sheet-nav-item" type="button" onclick="loadPage('stream')">Stream Pack</button>
+        <button class="sheet-nav-item" type="button" onclick="loadPage('video')">Video Builder</button>
+      </aside>
 
-          <div class="field">
-            <label>Clan</label>
-            <input id="logoClan" class="input" type="text" placeholder="Enter your clan name">
-          </div>
+      <section class="sheet-main">
+        <div class="sheet-row">
+          <label>Name</label>
+          <input id="logoName" type="text" placeholder="Brand Name">
+        </div>
+        <div class="sheet-row">
+          <label>Clan / Team</label>
+          <input id="logoClan" type="text" placeholder="Optional">
+        </div>
+        <div class="sheet-row">
+          <label>Game</label>
+          <select id="logoGame" title="Game">
+            <option value="Fortnite">Fortnite</option>
+            <option value="Call of Duty">Call of Duty</option>
+            <option value="Valorant">Valorant</option>
+            <option value="Apex">Apex</option>
+            <option value="CS2">CS2</option>
+            <option value="LoL">LoL</option>
+            <option value="FIFA">FIFA</option>
+            <option value="PUBG">PUBG</option>
+            <option value="Rocket League">Rocket League</option>
+            <option value="Minecraft">Minecraft</option>
+          </select>
+        </div>
+        <div class="sheet-row">
+          <label>Style</label>
+          <select id="logoStyle" title="Style">
+            <option value="Esports">Esports</option>
+            <option value="Anime">Anime</option>
+            <option value="Fantasy">Fantasy</option>
+            <option value="Cyber">Cyber</option>
+            <option value="Clean">Clean</option>
+            <option value="Manga">Manga</option>
+            <option value="Mascot">Mascot</option>
+            <option value="Minimal">Minimal</option>
+            <option value="3D">3D</option>
+          </select>
+        </div>
 
-          <div class="field">
-            <label>Game</label>
-            <select id="logoGame" title="Select a game">
-              <option value="">-</option>
-              <option>Fortnite</option>
-              <option>Call of Duty</option>
-              <option>Valorant</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label>Style</label>
-            <select id="logoStyle" title="Select a style">
-              <option value="">-</option>
-              <option>Anime</option>
-              <option>Esports</option>
-              <option>Fantasy</option>
-              <option>Cyber</option>
-            </select>
+        <div class="sheet-row">
+          <label>Farben</label>
+          <div class="sheet-check-grid">
+            <label><input type="checkbox" name="logoColor" value="Red"> Rot</label>
+            <label><input type="checkbox" name="logoColor" value="Blue"> Blau</label>
+            <label><input type="checkbox" name="logoColor" value="Green"> Gruen</label>
+            <label><input type="checkbox" name="logoColor" value="Black"> Schwarz</label>
+            <label><input type="checkbox" name="logoColor" value="Gold"> Gold</label>
+            <label><input type="checkbox" name="logoColor" value="White"> Weiss</label>
           </div>
         </div>
+
+        <div class="sheet-row">
+          <label>Notizen</label>
+          <textarea id="logoNotes" placeholder="Optionaler Feinschliff"></textarea>
+        </div>
+
+        <div class="sheet-highlight">Logo erzeugen und DNA automatisch speichern.</div>
 
         <div class="actions-row">
-          <button id="generateLogoBtn" class="btn">Generate Logo</button>
-          <button id="reuseDnaBtn" class="btn secondary">DNA laden</button>
+          <button id="generateLogoBtn" class="btn" type="button">Logo erstellen</button>
+          <button id="reuseDnaBtn" class="btn secondary" type="button">DNA verwenden</button>
+          <input id="logoUpload" type="file" accept=".png,.jpg,.jpeg,.webp" />
         </div>
 
-        <!-- 🔥 NEU -->
+        <div id="logoResult" class="sheet-result">Ergebnis und Aktionen erscheinen hier.</div>
+
+        <div class="sheet-highlight">Varianten auf Basis der aktuellen DNA.</div>
         <div class="actions-row">
-          <button id="genBanner" class="btn secondary">Banner</button>
-          <button id="genSticker" class="btn secondary">Sticker</button>
-          <button id="genFrame" class="btn secondary">Frame</button>
+          <button id="genBanner" class="btn secondary" type="button">Banner</button>
+          <button id="genSticker" class="btn secondary" type="button">Sticker</button>
+          <button id="genFrame" class="btn secondary" type="button">Frame</button>
         </div>
-      </div>
 
-      <aside class="preview-pane">
-        <div id="logoPreviewFrame" class="preview-frame">
-          <div class="preview-placeholder">Hier erscheint dein Logo</div>
+        <div id="dnaLibrary" class="sheet-result">DNA-Bibliothek</div>
+      </section>
+
+      <aside class="sheet-preview">
+        <div id="logoPreviewFrame" class="sheet-preview-box">
+          <div class="preview-placeholder">Logo-Vorschau</div>
         </div>
       </aside>
     </div>
   </article>
 </section>
-
-<script>
-function buildMagicPrompt(data) {
-  return `
-ultra detailed cinematic esports logo,
-logo text: "${data.name}",
-${data.clan ? "clan " + data.clan : ""}
-${data.game ? "inspired by " + data.game : ""}
-${data.style ? data.style + " style" : ""}
-high contrast, glowing effects, 4k, sharp details
-`;
-}
-
-// 🔥 LOGO GENERIEREN
-document.getElementById("generateLogoBtn").onclick = async () => {
-  const data = {
-    name: document.getElementById("logoName").value,
-    clan: document.getElementById("logoClan").value,
-    game: document.getElementById("logoGame").value,
-    style: document.getElementById("logoStyle").value
-  };
-
-  if (!data.name) return alert("Name fehlt");
-
-  const prompt = buildMagicPrompt(data);
-
-  const response = await window.authFetch("/api/generate-logo", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      prompt,
-      requestId: `logo-inline-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-    })
-  });
-
-  if (!response || !response.ok) {
-    alert("Fehler");
-    await window.loadUser?.();
-    return;
-  }
-
-  const result = await response.json().catch(() => null);
-  if (!result || !result.image) {
-    alert("Fehler");
-    await window.loadUser?.();
-    return;
-  }
-
-  document.getElementById("logoPreviewFrame").innerHTML =
-    `<img src="${result.image}" style="width:100%">`;
-
-  localStorage.setItem("lastLogoDNA", JSON.stringify({ ...data, prompt }));
-  await window.loadUser?.();
-};
-
-// 🔥 DNA LADEN
-document.getElementById("reuseDnaBtn").onclick = () => {
-  const dna = JSON.parse(localStorage.getItem("lastLogoDNA"));
-  if (!dna) return alert("Keine DNA");
-
-  document.getElementById("logoName").value = dna.name || "";
-  document.getElementById("logoClan").value = dna.clan || "";
-  document.getElementById("logoGame").value = dna.game || "";
-  document.getElementById("logoStyle").value = dna.style || "";
-};
-
-// 🔥 EXTRAS
-async function generateExtra(type) {
- const dna = JSON.parse(localStorage.getItem("lastLogoDNA"));
-  if (!dna) return alert("Erst Logo erstellen!");
-
-  let prompt = dna.prompt;
-
-  if (type === "banner") prompt += ", wide banner";
-  if (type === "sticker") prompt += ", sticker";
-  if (type === "frame") prompt += ", webcam frame";
-
-  const response = await window.authFetch("/api/generate-logo", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      prompt,
-      requestId: `logo-extra-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-    })
-  });
-
-  if (!response || !response.ok) {
-    alert("Fehler");
-    await window.loadUser?.();
-    return;
-  }
-
-  const result = await response.json().catch(() => null);
-  if (!result || !result.image) {
-    alert("Fehler");
-    await window.loadUser?.();
-    return;
-  }
-
-  document.getElementById("logoPreviewFrame").innerHTML =
-    `<img src="${result.image}" style="width:100%">`;
-  await window.loadUser?.();
-}
-
-document.getElementById("genBanner").onclick = () => generateExtra("banner");
-document.getElementById("genSticker").onclick = () => generateExtra("sticker");
-document.getElementById("genFrame").onclick = () => generateExtra("frame");
-</script>

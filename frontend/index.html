@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Creator Studio</title>
+  <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/ui.css">
+  <link rel="stylesheet" href="css/tabs.css">
+  <link rel="stylesheet" href="css/pricing.css">
 </head>
 <body>
   <div class="app-shell">
@@ -17,64 +20,12 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import {
-      getAuth,
-      onAuthStateChanged,
-      signInWithEmailAndPassword,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyAzNqEXGDYnyyaxyi_dEkWR8ek3fsoMhFA",
-      authDomain: "logomakergermany-kreativtool.firebaseapp.com",
-      projectId: "logomakergermany-kreativtool"
-    };
-
-    const firebaseApp = initializeApp(firebaseConfig);
-    const auth = getAuth(firebaseApp);
-
-    window.firebaseAuthApi = {
-      async login(email, password) {
-        const credential = await signInWithEmailAndPassword(auth, email, password);
-        const token = await credential.user.getIdToken(true);
-        localStorage.setItem("token", token);
-        return credential.user;
-      },
-      async logout() {
-        await signOut(auth);
-        localStorage.removeItem("token");
-      },
-      async getToken(forceRefresh = false) {
-        if (!auth.currentUser) {
-          return localStorage.getItem("token");
-        }
-
-        const token = await auth.currentUser.getIdToken(forceRefresh);
-        localStorage.setItem("token", token);
-        return token;
-      }
-    };
-
-    window.firebaseAuthReady = new Promise((resolve) => {
-      onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          const token = await user.getIdToken();
-          localStorage.setItem("token", token);
-        } else {
-          localStorage.removeItem("token");
-        }
-
-        resolve(user);
-        window.dispatchEvent(new CustomEvent("creator-auth-changed", { detail: { user } }));
-      });
-    });
-  </script>
-
-  <script src="js/tools.js"></script>
-  <script src="js/dashboard.js"></script>
-  <script src="js/login.js"></script>
-  <script src="js/router.js"></script>
+  <!-- Firebase SDK and Initialization -->
+ <script type="module" src="js/api-client.js"></script>
+<script type="module" src="js/error-handler.js"></script>
+<script type="module" src="js/tools.js"></script>
+<script type="module" src="js/frontend-fixed.js"></script>
+<script type="module" src="js/router-fixed.js"></script>
+<script type="module" src="js/stripe-prices.js"></script>
 </body>
 </html>

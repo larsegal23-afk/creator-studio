@@ -2,25 +2,58 @@
 
   <div class="card">
     <h3>120 Coins</h3>
-    <p>Perfekt zum Start</p>
+    <p>Starter</p>
     <h2>4,99 €</h2>
-    <button onclick="buyCoins('price_120')">Kaufen</button>
+    <button onclick="buyCoins('coins120')">Kaufen</button>
   </div>
 
   <div class="card best">
-    <span class="badge">🔥 Beliebt</span>
+    <span class="badge">Beliebt</span>
     <h3>700 Coins</h3>
-    <p>Bestes Preis-Leistungs-Verhältnis</p>
+    <p>Bester Wert</p>
     <h2>19,99 €</h2>
-    <button onclick="buyCoins('price_700')">Kaufen</button>
+    <button onclick="buyCoins('coins700')">Kaufen</button>
   </div>
 
   <div class="card premium">
-    <span class="badge">💎 Sparpaket</span>
+    <span class="badge">Premium</span>
     <h3>2000 Coins</h3>
-    <p>Maximal sparen</p>
+    <p>Fuer Teams</p>
     <h2>49,99 €</h2>
-    <button onclick="buyCoins('price_2000')">Kaufen</button>
+    <button onclick="buyCoins('coins2000')">Kaufen</button>
   </div>
 
 </div>
+<script>
+async function buyCoins(pack) {
+  try {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Bitte einloggen!");
+      return;
+    }
+
+    const res = await fetch("https://logomakergermany-ultimate-backend-production.up.railway.app/api/create-checkout-session", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({ pack })
+    });
+
+    const data = await res.json();
+
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      alert("Fehler beim Checkout");
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("Server Fehler");
+  }
+}
+</script>

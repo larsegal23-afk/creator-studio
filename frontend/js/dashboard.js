@@ -1,35 +1,49 @@
 window.loadUser = async function loadUser() {
-  const response = await window.authFetch("/api/get-coins");
-  const coinValue = document.getElementById("coinsValue");
-  const coinTop = document.getElementById("coinsTopValue");
-  const projectValue = document.getElementById("projectsValue");
+  try {
+    const response = await window.authfetch("https://logomakergermany-ultimate-backend-production.up.railway.app/api/get-coins");
+    const coinValue = document.getElementById("coinsValue");
+    const coinTop = document.getElementById("coinsTopValue");
+    const projectValue = document.getElementById("projectsValue");
 
-  if (!response || !response.ok) {
+    if (!response || !response.ok) {
+      console.warn("Failed to load coins:", response?.status);
+      if (coinValue) {
+        coinValue.textContent = "0";
+      }
+      if (coinTop) {
+        coinTop.textContent = "0";
+      }
+      if (projectValue) {
+        projectValue.textContent = String(JSON.parse(localStorage.getItem("creatorStudio.projects") || "[]").length || 0);
+      }
+      return;
+    }
+
+    const payload = await response.json();
+    const projects = JSON.parse(localStorage.getItem("creatorStudio.projects") || "[]");
+
     if (coinValue) {
-      coinValue.textContent = "-";
+      coinValue.textContent = String(payload.coins ?? 0);
+    }
+
+    if (coinTop) {
+      coinTop.textContent = String(payload.coins ?? 0);
+    }
+
+    if (projectValue) {
+      projectValue.textContent = String(projects.length);
+    }
+  } catch (error) {
+    console.error("Error in loadUser:", error);
+    const coinValue = document.getElementById("coinsValue");
+    const coinTop = document.getElementById("coinsTopValue");
+    
+    if (coinValue) {
+      coinValue.textContent = "0";
     }
     if (coinTop) {
-      coinTop.textContent = "-";
+      coinTop.textContent = "0";
     }
-    if (projectValue) {
-      projectValue.textContent = String(JSON.parse(localStorage.getItem("creatorStudio.projects") || "[]").length || 0);
-    }
-    return;
-  }
-
-  const payload = await response.json();
-  const projects = JSON.parse(localStorage.getItem("creatorStudio.projects") || "[]");
-
-  if (coinValue) {
-    coinValue.textContent = String(payload.coins ?? 0);
-  }
-
-  if (coinTop) {
-    coinTop.textContent = String(payload.coins ?? 0);
-  }
-
-  if (projectValue) {
-    projectValue.textContent = String(projects.length);
   }
 };
 
@@ -39,12 +53,12 @@ window.loadActivityFeed = async function loadActivityFeed() {
     return;
   }
 
-  const response = await window.authFetch("/api/activity");
+  const response = await window.authFetch("https://logomakergermany-ultimate-backend-production.up.railway.app/api/activity");
 
   if (!response || !response.ok) {
     container.innerHTML = `
       <div class="empty-state">
-        Aktivitaeten konnten gerade nicht geladen werden.
+        Aktivitaeten konnten nicht geladen werden.
       </div>
     `;
     return;
@@ -55,7 +69,7 @@ window.loadActivityFeed = async function loadActivityFeed() {
   if (!entries.length) {
     container.innerHTML = `
       <div class="empty-state">
-        Noch keine Aktivitaeten vorhanden. Starte mit dem ersten Logo oder Streampack.
+        Noch keine Aktivitaeten vorhanden.
       </div>
     `;
     return;
@@ -66,7 +80,7 @@ window.loadActivityFeed = async function loadActivityFeed() {
       <div class="section-head">
         <div>
           <h3>${window.escapeHtml(entry.type || "Aktivitaet")}</h3>
-          <p class="muted">${window.escapeHtml(entry.reference || "Ohne Referenz")}</p>
+          <p class="muted">${window.escapeHtml(entry.reference || "Keine Referenz")}</p>
         </div>
         <strong>${entry.amount ?? 0} Coins</strong>
       </div>
@@ -75,7 +89,7 @@ window.loadActivityFeed = async function loadActivityFeed() {
 };
 
 window.buyCoins = async function buyCoins(pack) {
-  const response = await window.authFetch("/api/create-checkout-session", {
+  const response = await window.authFetch("https://logomakergermany-ultimate-backend-production.up.railway.app/api/create-checkout-session", {
     method: "POST",
     body: JSON.stringify({ pack })
   });
@@ -88,7 +102,7 @@ window.buyCoins = async function buyCoins(pack) {
   const payload = await response.json();
 
   if (!payload?.url) {
-    window.showToast("Keine Checkout-URL vom Backend erhalten.", "error");
+    window.showToast("Keine Checkout-URL erhalten.", "error");
     return;
   }
 
@@ -106,7 +120,7 @@ window.renderProjectOverview = function renderProjectOverview() {
   if (!projects.length) {
     container.innerHTML = `
       <div class="empty-state">
-        Noch keine lokalen Projektkarten gespeichert. Sobald du im Builder arbeitest, tauchen sie hier auf.
+        Noch keine Projekte vorhanden.
       </div>
     `;
     return;
@@ -116,7 +130,7 @@ window.renderProjectOverview = function renderProjectOverview() {
     <article class="tool-card">
       <h3>${window.escapeHtml(project.name)}</h3>
       <p class="muted">${window.escapeHtml(project.type)}</p>
-      <p>${window.escapeHtml(project.summary || "Ohne Zusammenfassung")}</p>
+      <p>${window.escapeHtml(project.summary || "Keine Zusammenfassung")}</p>
     </article>
   `).join("");
 };

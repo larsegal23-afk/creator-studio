@@ -1,65 +1,62 @@
-<section class="page-stack">
-  <article class="card">
-    <div class="section-head">
-      <div>
-        <h2>Logo + Stream Pack</h2>
-        <p class="muted">Auswahl fuer Facecam, Alerts, Layout, Pause, Stream Start, Stream Ende und Sticker.</p>
-      </div>
-    </div>
+<section class="sheet-page">
+  <article class="sheet-card">
+    <header class="sheet-header-row">
+      <div>Logo</div>
+      <div>Stream Pack</div>
+      <div>Branding studio</div>
+      <div>Account</div>
+      <div>Coins</div>
+    </header>
 
-    <div class="builder-grid">
-      <div class="page-stack">
-        <div class="field">
-          <label for="streamBrandName">Projektname</label>
-          <input id="streamBrandName" class="input" type="text" placeholder="Zum Beispiel Creator Pack fuer Agenturname">
+    <div class="sheet-layout">
+      <aside class="sheet-left-nav">
+        <button class="sheet-nav-item" type="button" onclick="loadPage('logo')">Logo Builder</button>
+        <button class="sheet-nav-item active" type="button">Stream Pack</button>
+        <button class="sheet-nav-item" type="button" onclick="loadPage('video')">Video Builder</button>
+      </aside>
+
+      <section class="sheet-main">
+        <div class="sheet-row">
+          <label>Projektname</label>
+          <input id="streamBrandName" type="text" placeholder="Name des Stream Packs">
         </div>
 
-        <div class="field">
-          <label>Streampack-Auswahl</label>
-          <div class="option-grid">
-            <label class="selection-card"><input type="checkbox" name="streamAsset" value="Facecam Rahmen"><span><strong>Facecam Rahmen</strong><span>Immer transparent, 16:9 und 9:16</span></span></label>
-            <label class="selection-card"><input type="checkbox" name="streamAsset" value="Alerts"><span><strong>Alerts</strong><span>Transparente Benachrichtigungen</span></span></label>
-            <label class="selection-card"><input type="checkbox" name="streamAsset" value="Layout"><span><strong>Layout</strong><span>Gesamter Stream-Aufbau</span></span></label>
-            <label class="selection-card"><input type="checkbox" name="streamAsset" value="Pause Stream"><span><strong>Pause Stream</strong><span>Break Screen</span></span></label>
-            <label class="selection-card"><input type="checkbox" name="streamAsset" value="Stream beginnt"><span><strong>Stream beginnt</strong><span>Starting Soon</span></span></label>
-            <label class="selection-card"><input type="checkbox" name="streamAsset" value="Stream endet"><span><strong>Stream endet</strong><span>Offline Screen</span></span></label>
-            <label class="selection-card"><input type="checkbox" name="streamAsset" value="Sticker"><span><strong>Sticker</strong><span>Transparente Zusatzgrafiken</span></span></label>
+        <div class="sheet-row">
+          <label>Asset Auswahl</label>
+          <div class="sheet-check-grid">
+            <label><input type="checkbox" name="streamAsset" value="Facecam Rahmen"> Facecam Rahmen (transparent)</label>
+            <label><input type="checkbox" name="streamAsset" value="Alerts"> Alerts (transparent)</label>
+            <label><input type="checkbox" name="streamAsset" value="Layout"> Layout (transparent)</label>
+            <label><input type="checkbox" name="streamAsset" value="Pause Stream"> Pause Stream</label>
+            <label><input type="checkbox" name="streamAsset" value="Stream beginnt"> Stream beginnt</label>
+            <label><input type="checkbox" name="streamAsset" value="Stream endet"> Stream endet</label>
+            <label><input type="checkbox" name="streamAsset" value="Sticker"> Sticker (transparent)</label>
           </div>
         </div>
 
-        <div class="field">
-          <label>Ausgabeformate</label>
-          <div class="option-grid">
-            <label class="selection-card"><input type="checkbox" name="streamFormat" value="16:9"><span><strong>16:9</strong><span>Classic Landscape</span></span></label>
-            <label class="selection-card"><input type="checkbox" name="streamFormat" value="9:16"><span><strong>9:16</strong><span>Vertical Creator Format</span></span></label>
+        <div class="sheet-row">
+          <label>Output format</label>
+          <div class="sheet-check-grid">
+            <label><input type="checkbox" name="streamFormat" value="16:9"> 16:9</label>
+            <label><input type="checkbox" name="streamFormat" value="9:16"> 9:16</label>
           </div>
         </div>
 
+        <div class="sheet-danger-note">Es werden nur ausgewaehlte Assets erstellt.</div>
+        <div class="sheet-highlight">Pack erzeugen.</div>
         <div class="actions-row">
-          <button id="generateStreamBtn" class="btn" type="button">Generate Streampack</button>
+          <button id="generateStreamBtn" class="btn" type="button">Stream Pack erstellen</button>
         </div>
-      </div>
 
-      <aside class="preview-pane">
-        <div class="section-head">
-          <div>
-            <h3>Logo Fenster</h3>
-            <p class="muted">Rechte Vorschau fuer Auswahl und Asset-Plan.</p>
-          </div>
-        </div>
-        <div class="preview-frame">
-          <div class="preview-placeholder">
-            Die Vorschau zeigt nach dem Erstellen die gewaehlten Streampack-Bestandteile an.
-          </div>
+        <div id="streamPreview" class="sheet-result">Vorschau erscheint nach dem Erstellen.</div>
+        <div id="streamDownloadArea" class="sheet-result">Download erscheint automatisch, sobald verfuegbar.</div>
+      </section>
+
+      <aside class="sheet-preview">
+        <div class="sheet-preview-box">
+          <div class="preview-placeholder">Pack-Vorschau</div>
         </div>
       </aside>
     </div>
-  </article>
-
-  <article id="streamPreview" class="card">
-    <div class="empty-state">Hier erscheint gleich dein generiertes Streampack-Konzept.</div>
-  </article>
-  <article id="streamDownloadArea" class="card">
-    <div class="empty-state">Der Download-Bereich wird vorbereitet, sobald du oben eine Auswahl erzeugst.</div>
   </article>
 </section>

@@ -1,45 +1,45 @@
 window.CreatorRoutes = {
   dashboard: {
     title: "Branding Studio",
-    copy: "Zentrale fuer Logo, Stream Pack, Video Builder und Systemstatus.",
+    copy: "Zentrale fuer Logo, Stream und Video.",
     protected: true,
     init: () => window.initDashboardPage?.()
   },
   logo: {
     title: "Mein Logo",
-    copy: "Namensfeld, Stil-DNA, Farben und grosses Logo-Fenster wie in deiner Vorlage.",
+    copy: "Logo erstellen, Varianten testen, DNA speichern.",
     protected: true,
     init: () => window.initLogoPage?.()
   },
   "logo-dna": {
     title: "Logo DNA System",
-    copy: "Identitaetsprofil mit Archetyp, Energie und sofort nutzbarem Prompt-Blueprint.",
+    copy: "Markenprofil und Prompt-Blueprint.",
     protected: true,
     init: () => window.initLogoDnaPage?.()
   },
   stream: {
     title: "Logo + Stream Pack",
-    copy: "Auswahl fuer Facecam, Alerts, Layout und Sticker mit uebernommenem Stil.",
+    copy: "Stream-Assets im selben Markenstil.",
     protected: true,
     init: () => window.initStreamPage?.()
   },
   video: {
-    title: "Video Upload und Creator Builder",
-    copy: "Gameplay-Upload, Highlight Detection und Ausgabeformate in einer klaren Builder-Ansicht.",
+    title: "Video Builder",
+    copy: "Highlights erkennen, Clips waehlen, Short exportieren.",
     protected: true,
     init: () => window.initVideoPage?.()
   },
-  system: {
-    title: "System",
-    copy: "Hintergrund, Deployment-Status und technische Uebersicht.",
-    protected: true,
-    init: () => window.initSystemPage?.()
-  },
   login: {
     title: "Login",
-    copy: "Firebase-Anmeldung fuer das Creator Studio.",
+    copy: "Sicher anmelden und direkt starten.",
     protected: false,
     init: () => window.initLoginPage?.()
+  },
+  billing: {
+    title: "Coins",
+    copy: "Coins aufladen und verwalten.",
+    protected: true,
+    init: () => window.coinsManager?.init?.()
   }
 };
 
@@ -60,19 +60,19 @@ window.renderSidebar = function renderSidebar(activeRoute) {
 
   const isAuthed = window.isLogged();
   const navItems = [
-    { key: "dashboard", label: "Branding Studio", copy: "Cockpit und Uebersicht" },
-    { key: "logo", label: "Mein Logo", copy: "Logo und Brand-DNA" },
-    { key: "logo-dna", label: "Logo DNA System", copy: "Archetyp und DNA-Blueprint" },
+    { key: "dashboard", label: "Dashboard", copy: "Uebersicht" },
+    { key: "logo", label: "Logo", copy: "Logo und DNA" },
+    { key: "logo-dna", label: "DNA", copy: "Profil und Blueprint" },
     { key: "stream", label: "Stream Pack", copy: "Assets und Formate" },
-    { key: "video", label: "Video Builder", copy: "Upload und Clip-Plan" },
-    { key: "system", label: "System", copy: "Status und Hintergrund" }
+    { key: "video", label: "Video", copy: "Highlights und Export" },
+    { key: "billing", label: "Coins", copy: "Kauf und Verwaltung" }
   ];
 
   sidebar.innerHTML = `
     <section class="brand-block">
       <p class="brand-kicker">Creator Studio</p>
-      <h1 class="brand-title">Branding und Video in einer klaren Struktur.</h1>
-      <p class="brand-copy">Links die Module, rechts die Builder-Flaeche mit grossem Vorschaufenster wie in deinen Tabellen.</p>
+      <h1 class="brand-title">Branding. Video. Ergebnis.</h1>
+      <p class="brand-copy">Klare Module, schneller Workflow.</p>
     </section>
 
     <nav class="sidebar-nav">
@@ -93,7 +93,7 @@ window.renderSidebar = function renderSidebar(activeRoute) {
     </nav>
 
     <div class="sidebar-footer">
-      <p>${isAuthed ? "Backend angebunden und Studio entsperrt." : "Bitte zuerst einloggen, damit Coins und Backend-Module aktiv sind."}</p>
+      <p>${isAuthed ? "Studio aktiv." : "Bitte einloggen."}</p>
       ${isAuthed
         ? '<button class="btn ghost" type="button" onclick="logout()">Logout</button>'
         : '<button class="btn secondary" type="button" onclick="loadPage(\'login\')">Zum Login</button>'}
@@ -128,46 +128,79 @@ window.handleLoggedOutState = function handleLoggedOutState() {
 };
 
 window.loadPage = async function loadPage(name) {
-  const requestedRoute = window.CreatorRoutes[name] ? name : "dashboard";
-  const route = window.CreatorRoutes[requestedRoute];
-  const targetRoute = route.protected && !window.isLogged() ? "login" : requestedRoute;
-  const target = window.CreatorRoutes[targetRoute];
-  const app = document.getElementById("app");
-
-  if (!app) {
-    return;
-  }
-
-  window.__creatorCurrentRoute = targetRoute;
-  window.renderSidebar(targetRoute);
-  window.renderTopbar(targetRoute);
-
-  app.innerHTML = `
-    <div class="card">
-      <div class="loader"></div>
-    </div>
-  `;
-
   try {
-    const response = await fetch(`pages/${targetRoute}.html`);
+    // Route validation
+    const requestedRoute = window.CreatorRoutes[name] ? name : "dashboard";
+    const route = window.CreatorRoutes[requestedRoute];
+    
+    if (!route) {
+      throw new Error(`Route ${requestedRoute} not found`);
+    }
+
+    // Authentication guard
+    const targetRoute = route.protected && !window.isLogged() ? "login" : requestedRoute;
+    const target = window.CreatorRoutes[targetRoute];
+    
+    if (!target) {
+      throw new Error(`Target route ${targetRoute} not found`);
+    }
+
+    // DOM elements check
+    const app = document.getElementById("app");
+    if (!app) {
+      throw new Error("App container not found");
+    }
+
+    // Update navigation state
+    window.__creatorCurrentRoute = targetRoute;
+    window.renderSidebar(targetRoute);
+    window.renderTopbar(targetRoute);
+
+    // Loading state
+    app.innerHTML = `
+      <div class="card">
+        <div class="loader"></div>
+        <p>Lade Seite...</p>
+      </div>
+    `;
+
+    // Load page content
+    const pageFile = targetRoute === 'billing' ? 'billing-standalone.html' : 
+                     targetRoute === 'logo' ? 'logo-final.html' : 
+                     targetRoute === 'stream' ? 'stream-final.html' : 
+                     `${targetRoute}.html`;
+    const response = await fetch(`pages/${pageFile}`);
     if (!response.ok) {
       throw new Error(`Page ${targetRoute} not found`);
     }
 
-    app.innerHTML = await response.text();
-    target.init?.();
+    const html = await response.text();
+    app.innerHTML = html;
 
-    if (window.isLogged()) {
-      window.loadUser?.();
+    // Initialize page
+    if (typeof target.init === 'function') {
+      await target.init();
     }
+
+    // Load user data if authenticated
+    if (window.isLogged() && typeof window.loadUser === 'function') {
+      await window.loadUser();
+    }
+
   } catch (error) {
-    console.log("Route loading failed", error);
-    app.innerHTML = `
-      <div class="card">
-        <h2>Seite konnte nicht geladen werden</h2>
-        <p class="muted">Bitte pruefe die Projektdateien und lade die Route erneut.</p>
-      </div>
-    `;
+    console.error("Route loading failed:", error);
+    ErrorHandler?.log(error, `Router: ${name}`);
+    
+    const app = document.getElementById("app");
+    if (app) {
+      app.innerHTML = `
+        <div class="card">
+          <h2>Seite konnte nicht geladen werden</h2>
+          <p class="muted">Fehler: ${error.message}</p>
+          <button class="btn primary" onclick="loadPage('dashboard')">Zum Dashboard</button>
+        </div>
+      `;
+    }
   }
 };
 

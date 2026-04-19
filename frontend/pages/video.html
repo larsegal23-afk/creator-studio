@@ -1,86 +1,144 @@
 <section class="page-stack">
+  <article class="hero-card">
+    <div class="hero-copy">
+      <p class="hero-kicker">Video Builder</p>
+      <h1>Video-Verarbeitung mit Coins.</h1>
+      <p>
+        Lade dein Gameplay hoch, erstelle Highlights und exportiere direkt zu TikTok.
+      </p>
+    </div>
+    <div class="hero-visual"></div>
+  </article>
+
   <article class="card">
     <div class="section-head">
       <div>
-        <h2>Video Upload und Creator Video Builder</h2>
-        <p class="muted">MP4, MOV und MKV Upload mit Highlight Detection und Ausgabeformaten nach deinem Tabellenbild.</p>
+        <h2>Video hochladen</h2>
+        <p class="muted">Lade dein Gameplay-Video hoch und wähle die Verarbeitungsoptionen.</p>
       </div>
     </div>
+    
+    <div class="video-upload">
+      <div class="upload-area">
+        <input type="file" id="videoFile" accept="video/*" style="display: none;">
+        <label for="videoFile" class="upload-label">
+          <span class="upload-icon">+ Video hochladen</span>
+        </label>
+      </div>
+      
+      <div id="videoPreview" class="video-preview" style="display: none;">
+        <video id="videoPlayer" controls></video>
+        <div class="video-info">
+          <p><strong>Dateiname:</strong> <span id="fileName">-</span></p>
+          <p><strong>Dauer:</strong> <span id="videoDuration">-</span></p>
+          <p><strong>Kosten:</strong> <span id="videoCost">-</span> Coins</p>
+        </div>
+      </div>
+    </div>
+  </article>
 
-    <div class="builder-grid">
-      <div class="page-stack">
-        <div class="upload-zone">
-          <div>
-            <h3>Gameplay Video hochladen</h3>
-            <p class="muted">Maximal aktuell als Planungsmodul hinterlegt. Uploadformate: MP4, MOV, MKV.</p>
-            <input id="videoFile" type="file" accept=".mp4,.mov,.mkv,video/mp4,video/quicktime,video/x-matroska">
-            <p id="videoFileMeta" class="muted">Noch kein Video ausgewaehlt</p>
-          </div>
+  <article class="card">
+    <div class="section-head">
+      <div>
+        <h2>Verarbeitungsoptionen</h2>
+        <p class="muted">Wähle was mit deinem Video passieren soll.</p>
+      </div>
+    </div>
+    
+    <div class="processing-options">
+      <div class="option-group">
+        <label>
+          <input type="checkbox" id="createHighlights">
+          Highlights erstellen (10 Coins)
+        </label>
+        <label>
+          <input type="checkbox" id="addEffects">
+          Effekte hinzufügen (5 Coins)
+        </label>
+        <label>
+          <input type="checkbox" id="exportTikTok">
+          Zu TikTok exportieren (5 Coins)
+        </label>
+      </div>
+      
+      <div class="total-cost">
+        <strong>Gesamtkosten:</strong> <span id="totalCost">0</span> Coins
+      </div>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="section-head">
+      <div>
+        <h2>TikTok Export</h2>
+        <p class="muted">Optimiere dein Video für TikTok.</p>
+      </div>
+    </div>
+    
+    <div class="tiktok-options">
+      <input type="text" id="tiktokTitle" placeholder="TikTok Titel..." maxlength="100">
+      <input type="text" id="tiktokHashtags" placeholder="#gaming #highlights #fyp">
+      
+      <button class="btn primary" onclick="processVideoWithCoins()" id="processBtn">
+        Video verarbeiten
+      </button>
+      
+      <button class="btn secondary" onclick="exportToTikTok()" id="tiktokBtn" style="display: none;">
+        Zu TikTok exportieren
+      </button>
+    </div>
+  </article>
+</section>
+          <input id="videoFile" type="file" accept=".mp4,.mov,.mkv,video/mp4,video/quicktime,video/x-matroska">
+        </div>
+        <div id="videoFileMeta" class="sheet-result">Noch kein Video ausgewaehlt</div>
+
+        <div class="sheet-row">
+          <label>Projekt / Titelname</label>
+          <input id="videoTitle" type="text" placeholder="Fortnite Highlight Reel">
         </div>
 
-        <div class="field">
-          <label for="videoTitle">Projekt- oder Titelname</label>
-          <input id="videoTitle" class="input" type="text" placeholder="Zum Beispiel Fortnite Highlight Reel">
+        <div class="sheet-title">Highlight-Erkennung</div>
+        <div class="sheet-check-grid">
+          <label><input type="checkbox" name="highlightType" value="Headshots"> Headshots</label>
+          <label><input type="checkbox" name="highlightType" value="Kills"> Kills</label>
+          <label><input type="checkbox" name="highlightType" value="Wins"> Wins</label>
+          <label><input type="checkbox" name="highlightType" value="Funny Moments"> Funny Moments</label>
+          <label><input type="checkbox" name="highlightType" value="Loud Audio Peaks"> Loud Audio Peaks</label>
+          <label><input type="checkbox" name="highlightType" value="Fast Movement"> Fast Movement</label>
         </div>
 
-        <div class="field">
-          <label>Highlight Detection</label>
-          <div class="option-grid">
-            <label class="selection-card"><input type="checkbox" name="highlightType" value="Action Scenes"><span><strong>Action Scenes</strong><span>Schnelle Kampfszenen</span></span></label>
-            <label class="selection-card"><input type="checkbox" name="highlightType" value="Kills"><span><strong>Kills</strong><span>Frags und Eliminations</span></span></label>
-            <label class="selection-card"><input type="checkbox" name="highlightType" value="Wins"><span><strong>Wins</strong><span>Victory und Endmomente</span></span></label>
-            <label class="selection-card"><input type="checkbox" name="highlightType" value="Funny Moments"><span><strong>Funny Moments</strong><span>Memes und Fail Clips</span></span></label>
-            <label class="selection-card"><input type="checkbox" name="highlightType" value="Loud Audio Peaks"><span><strong>Loud Audio Peaks</strong><span>Lautstaerke-Events</span></span></label>
-            <label class="selection-card"><input type="checkbox" name="highlightType" value="Fast Movement"><span><strong>Fast Movement</strong><span>Movement und Rush</span></span></label>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Video Format</label>
-          <div class="option-grid">
-            <label class="selection-card"><input type="checkbox" name="outputFormat" value="TikTok 9:16"><span><strong>TikTok 9:16</strong><span>Shortform vertikal</span></span></label>
-            <label class="selection-card"><input type="checkbox" name="outputFormat" value="YouTube Shorts"><span><strong>YouTube Shorts</strong><span>Mobile Shorts</span></span></label>
-            <label class="selection-card"><input type="checkbox" name="outputFormat" value="Instagram Reels"><span><strong>Instagram Reels</strong><span>Creator Social Clip</span></span></label>
-            <label class="selection-card"><input type="checkbox" name="outputFormat" value="YouTube 16:9"><span><strong>YouTube 16:9</strong><span>Landscape Edit</span></span></label>
-            <label class="selection-card"><input type="checkbox" name="outputFormat" value="Twitch Highlight"><span><strong>Twitch Highlight</strong><span>Replay und Highlight Roll</span></span></label>
-          </div>
+        <div class="sheet-title">Ausgabeformat</div>
+        <div class="sheet-check-grid">
+          <label><input type="checkbox" name="outputFormat" value="TikTok 9:16"> TikTok 9:16</label>
+          <label><input type="checkbox" name="outputFormat" value="YouTube Shorts"> YouTube Shorts</label>
+          <label><input type="checkbox" name="outputFormat" value="Instagram Reels"> Instagram Reels</label>
+          <label><input type="checkbox" name="outputFormat" value="YouTube 16:9"> YouTube 16:9</label>
+          <label><input type="checkbox" name="outputFormat" value="Twitch Highlight"> Twitch Highlight</label>
         </div>
 
         <div class="actions-row">
-          <button id="analyzeVideoBtn" class="btn" type="button">1) Highlights erkennen</button>
-          <button id="generateVideoBtn" class="btn secondary" type="button">2) Short Video erstellen</button>
+          <button id="analyzeVideoBtn" class="btn" type="button">1) Analyse starten</button>
+          <button id="generateVideoBtn" class="btn secondary" type="button">2) Short erstellen</button>
         </div>
 
-        <article id="detectedHighlightsCard" class="card" style="margin-top: 12px;">
-          <div class="section-head">
-            <div>
-              <h3>Erkannte Highlights (Abhak-System)</h3>
-              <p class="muted">Klicke die Szenen an, die ins finale Kurzvideo sollen.</p>
-            </div>
-          </div>
+        <article id="detectedHighlightsCard" class="sheet-result">
+          <div class="sheet-title">Erkannte Highlights</div>
           <div id="detectedHighlightsList" class="empty-state">
             Noch keine Highlights erkannt. Starte zuerst "Highlights erkennen".
           </div>
         </article>
-      </div>
 
-      <aside class="preview-pane">
-        <div class="section-head">
-          <div>
-            <h3>Thumbnail / Mini Player</h3>
-            <p class="muted">Vorschau auf Auswahl, Übergänge im Logo-Style und Export-Status.</p>
-          </div>
-        </div>
-        <div id="videoPreviewFrame" class="preview-frame">
-          <div class="preview-placeholder">
-            Nach der Dateiauswahl wird hier der Builder-Status und die naechste Produktionsstufe vorbereitet.
-          </div>
+        <article id="videoPlanResult" class="sheet-result">
+          Der Export-Plan erscheint nach der Auswahl.
+        </article>
+      </section>
+
+      <aside class="sheet-preview">
+        <div id="videoPreviewFrame" class="sheet-preview-box">
+          <div class="preview-placeholder">Video-Vorschau</div>
         </div>
       </aside>
     </div>
-  </article>
-
-  <article id="videoPlanResult" class="card">
-    <div class="empty-state">Nach dem Upload und der Auswahl der Formate erscheint hier dein Builder-Plan.</div>
   </article>
 </section>

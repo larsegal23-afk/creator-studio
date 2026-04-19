@@ -1,0 +1,27 @@
+{
+  "name": "creatorstudio-fullstack",
+  "version": "1.0.0",
+  "description": "Creator Studio - LogoMakerGermany Branding Studio",
+  "private": true,
+  "scripts": {
+    "start": "node start.js",
+    "dev": "node start.js",
+    "install-deps": "cd backend && npm install && cd ../frontend && npm install",
+    "backend": "cd backend && npm start",
+    "frontend": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "deploy": "firebase deploy --only hosting"
+  },
+  "keywords": [
+    "branding",
+    "logo",
+    "video",
+    "stream",
+    "creator-studio"
+  ],
+  "author": "LogoMakerGermany",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

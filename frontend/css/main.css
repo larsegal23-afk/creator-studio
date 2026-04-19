@@ -1,0 +1,687 @@
+/* Main CSS - Unified Design System */
+
+/* CSS Reset & Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Esports Color Palette */
+  --esports-primary: #3b82f6;
+  --esports-secondary: #8b5cf6;
+  --esports-accent: #ef4444;
+  --esports-dark: #1f2937;
+  --esports-darker: #111827;
+  --esports-light: #f1f5f9;
+  --esports-gold: #f59e0b;
+  --esports-green: #10b981;
+  
+  /* Original Dark Theme */
+  --bg-primary: #07070d;
+  --bg-secondary: #0d0d16;
+  --bg-tertiary: #020617;
+  --border-primary: #1e293b;
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --accent-primary: #7c3aed;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Layout System */
+.topbar {
+  height: 60px;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border-primary);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+.layout {
+  display: flex;
+  height: 100vh;
+  margin-top: 60px;
+}
+
+.sidebar {
+  width: 260px;
+  background: var(--bg-tertiary);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-right: 1px solid var(--border-primary);
+  position: fixed;
+  left: 0;
+  top: 60px;
+  bottom: 0;
+  overflow-y: auto;
+}
+
+.main {
+  flex: 1;
+  margin-left: 260px;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+  background: linear-gradient(rgba(5,5,15,0.92), rgba(5,5,15,0.96)), url('../assets/hero.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+.app {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* Components */
+.card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(6px);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  border-color: var(--accent-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(124, 58, 237, 0.15);
+}
+
+.hero-card {
+  background: linear-gradient(135deg, var(--esports-dark), var(--esports-darker));
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  padding: 48px;
+  margin-bottom: 32px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 0 40px rgba(59, 130, 246, 0.1),
+    0 0 80px rgba(59, 130, 246, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.hero-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--esports-primary), var(--esports-secondary), var(--esports-accent));
+  animation: esportsGlow 3s ease-in-out infinite;
+}
+
+@keyframes esportsGlow {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+/* Buttons */
+.btn {
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn:hover {
+  background: #6d28d9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.btn.primary {
+  background: linear-gradient(135deg, var(--esports-primary), var(--esports-secondary));
+  box-shadow: 0 4px 0 rgba(59, 130, 246, 0.3);
+}
+
+.btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 0 rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, var(--esports-secondary), var(--esports-primary));
+}
+
+.btn.secondary {
+  background: transparent;
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+}
+
+.btn.secondary:hover {
+  border-color: var(--accent-primary);
+  background: rgba(124, 58, 237, 0.1);
+}
+
+/* Esports Buttons */
+.esports-btn {
+  background: linear-gradient(135deg, var(--esports-primary), var(--esports-secondary));
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 16px 32px;
+  font-weight: 600;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 0 rgba(59, 130, 246, 0.3);
+}
+
+.esports-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 0 rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, var(--esports-secondary), var(--esports-primary));
+}
+
+.esports-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 0 rgba(59, 130, 246, 0.3);
+}
+
+.esports-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.esports-btn:hover::before {
+  left: 100%;
+}
+
+/* Form Elements */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+  background: var(--bg-secondary);
+}
+
+.esports-input, .esports-select {
+  background: rgba(31, 41, 55, 0.8);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 8px;
+  padding: 16px;
+  color: var(--esports-light);
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.esports-input:focus, .esports-select:focus {
+  outline: none;
+  border-color: var(--esports-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  background: rgba(31, 41, 55, 0.95);
+}
+
+/* Grid Systems */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+  margin: 32px 0;
+}
+
+.esports-grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.esports-grid-2 {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.esports-grid-3 {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.tool {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  padding: 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.tool:hover {
+  border-color: var(--accent-primary);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(124, 58, 237, 0.15);
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+
+h1 {
+  font-size: 2.5rem;
+  color: var(--text-primary);
+}
+
+h2 {
+  font-size: 2rem;
+  color: var(--text-primary);
+}
+
+h3 {
+  font-size: 1.5rem;
+  color: var(--text-primary);
+}
+
+.esports-title {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 700;
+  font-size: 2.5rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, var(--esports-primary), var(--esports-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.esports-subtitle {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--esports-light);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.muted {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* Esports Quality Indicators */
+.esports-quality {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--esports-green);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Esports Assets */
+.esports-asset {
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.9), rgba(17, 24, 39, 0.9));
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.esports-asset:hover {
+  border-color: var(--esports-primary);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+}
+
+.esports-asset::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--esports-primary), var(--esports-secondary));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.esports-asset:hover::after {
+  opacity: 1;
+}
+
+/* Asset Options */
+.asset-option, .format-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 8px;
+}
+
+.asset-option:hover, .format-option:hover {
+  border-color: var(--accent-primary);
+  background: rgba(124, 58, 237, 0.1);
+}
+
+.asset-option input, .format-option input {
+  margin: 0;
+  width: auto;
+}
+
+.asset-icon, .format-icon, .btn-icon {
+  font-size: 18px;
+  width: 24px;
+  text-align: center;
+}
+
+/* Color Selection */
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+}
+
+.color-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.color-option:hover {
+  border-color: var(--accent-primary);
+  background: rgba(124, 58, 237, 0.1);
+}
+
+.color-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.color-swatch.red { background: #ef4444; }
+.color-swatch.blue { background: #3b82f6; }
+.color-swatch.black { background: #000000; }
+.color-swatch.white { background: #ffffff; border-color: #e5e7eb; }
+.color-swatch.gold { background: #f59e0b; }
+.color-swatch.silver { background: #9ca3af; }
+.color-swatch.green { background: #10b981; }
+.color-swatch.purple { background: #8b5cf6; }
+
+/* Sections */
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.action-section {
+  margin: 32px 0;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cost-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  background: var(--bg-tertiary);
+  border-radius: 12px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border-primary);
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.summary-item span:first-child {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.summary-item span:last-child {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--esports-primary);
+}
+
+/* Loading States */
+.loader {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(124, 58, 237, 0.2);
+  border-top: 3px solid var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.esports-loader {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(59, 130, 246, 0.2);
+  border-top: 3px solid var(--esports-primary);
+  border-radius: 50%;
+  animation: esportsSpin 1s linear infinite;
+}
+
+@keyframes esportsSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Toast Notifications */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 16px 20px;
+  color: var(--text-primary);
+  font-weight: 500;
+  z-index: 10000;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+  max-width: 400px;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast.error {
+  border-color: var(--esports-accent);
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--esports-accent);
+}
+
+.toast.success {
+  border-color: var(--esports-green);
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--esports-green);
+}
+
+/* Page Stack */
+.page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    position: relative;
+    height: auto;
+  }
+  
+  .main {
+    margin-left: 0;
+  }
+  
+  .content {
+    padding: 20px;
+  }
+  
+  .form-grid,
+  .esports-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .esports-grid-2,
+  .esports-grid-3 {
+    grid-template-columns: 1fr;
+  }
+  
+  .color-grid {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .cost-summary {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .hero-card {
+    padding: 24px;
+  }
+  
+  .esports-title {
+    font-size: 2rem;
+  }
+  
+  .esports-btn {
+    padding: 12px 24px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar {
+    padding: 0 16px;
+  }
+  
+  .content {
+    padding: 16px;
+  }
+  
+  .card {
+    padding: 16px;
+  }
+  
+  .hero-card {
+    padding: 20px;
+  }
+  
+  .esports-title {
+    font-size: 1.75rem;
+  }
+}

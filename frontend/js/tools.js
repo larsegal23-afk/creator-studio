@@ -118,19 +118,19 @@ window.authFetch = async function authFetch(path, options = {}) {
     return response;
   } catch (error) {
     console.log("API request failed", error);
-    window.showToast("Netzwerkfehler beim Verbinden mit dem Backend.", "error");
+    window.showToast("Netzwerkfehler. Bitte erneut versuchen.", "error");
     return null;
   }
 };
 
 window.consumeCoins = async function consumeCoins(amount = 1) {
-  const response = await window.authFetch("/api/use-coins", {
+  const response = await window.authFetch("https://logomakergermany-ultimate-backend-production.up.railway.app/api/use-coins", {
     method: "POST",
     body: JSON.stringify({ amount })
   });
 
   if (!response) {
-    return { ok: false, reason: "NETWORK", message: "Coins konnten nicht geprueft werden." };
+    return { ok: false, reason: "NETWORK", message: "Coin-Pruefung fehlgeschlagen." };
   }
 
   const payload = await response.json().catch(() => null);
@@ -141,13 +141,13 @@ window.consumeCoins = async function consumeCoins(amount = 1) {
       || response.status === 402;
 
     if (isNoCoins) {
-      return { ok: false, reason: "NO_COINS", message: "Nicht genug Coins fuer diese Aktion." };
+      return { ok: false, reason: "NO_COINS", message: "Nicht genug Coins." };
     }
 
     return {
       ok: false,
       reason: "FAILED",
-      message: payload?.message || payload?.error || "Coins konnten nicht abgezogen werden."
+      message: payload?.message || payload?.error || "Coin-Abbuchung fehlgeschlagen."
     };
   }
 
@@ -200,12 +200,12 @@ window.initLogoPage = function initLogoPage() {
   reuseButton?.addEventListener("click", () => {
     const entries = getBrandDna();
     if (!entries.length) {
-      window.showToast("Noch keine gespeicherte DNA vorhanden.", "error");
+      window.showToast("Keine gespeicherte DNA gefunden.", "error");
       return;
     }
 
     window.fillLogoForm(entries[0]);
-    window.showToast("Letzte Brand-DNA wurde in das Formular geladen.");
+    window.showToast("DNA geladen.");
   });
 
   window.renderBrandDna();
@@ -223,7 +223,17 @@ window.fillLogoForm = function fillLogoForm(entry) {
   Object.entries(mapping).forEach(([id, value]) => {
     const element = document.getElementById(id);
     if (element) {
-      element.value = value || "";
+      const nextValue = value || "";
+      if (element.tagName === "SELECT" && nextValue) {
+        const hasOption = Array.from(element.options || []).some((option) => option.value === nextValue || option.text === nextValue);
+        if (!hasOption) {
+          const fallbackOption = document.createElement("option");
+          fallbackOption.value = nextValue;
+          fallbackOption.textContent = nextValue;
+          element.appendChild(fallbackOption);
+        }
+      }
+      element.value = nextValue;
     }
   });
 
@@ -245,7 +255,7 @@ window.renderBrandDna = function renderBrandDna() {
   if (!entries.length) {
     container.innerHTML = `
       <div class="empty-state">
-        Noch keine Brand-DNA gespeichert. Generiere dein erstes Logo und wir merken uns Stil, Spiel und Farben.
+        Noch keine DNA gespeichert.
       </div>
     `;
     return;
@@ -255,8 +265,8 @@ window.renderBrandDna = function renderBrandDna() {
     <article class="dna-item">
       <div class="section-head">
         <div>
-          <h3>${window.escapeHtml(entry.brandName || "Unbenanntes Projekt")}</h3>
-          <p class="muted">${window.escapeHtml(entry.game || "Game offen")} - ${window.escapeHtml(entry.style || "Style offen")}</p>
+          <h3>${window.escapeHtml(entry.brandName || "Unbenannt")}</h3>
+          <p class="muted">${window.escapeHtml(entry.game || "Game")} - ${window.escapeHtml(entry.style || "Style")}</p>
         </div>
         <button class="btn secondary" type="button" onclick="useBrandDna(${index})">Verwenden</button>
       </div>
@@ -274,7 +284,7 @@ window.useBrandDna = function useBrandDna(index) {
   }
 
   window.fillLogoForm(entries[index]);
-  window.showToast("Brand-DNA in das Formular uebernommen.");
+  window.showToast("DNA uebernommen.");
 };
 
 window.generateLogoFromForm = async function generateLogoFromForm() {
@@ -286,7 +296,7 @@ window.generateLogoFromForm = async function generateLogoFromForm() {
   const colors = Array.from(document.querySelectorAll('input[name="logoColor"]:checked')).map((input) => input.value);
 
   if (!brandName) {
-    window.showToast("Bitte gib zuerst einen Namen fuer das Branding an.", "error");
+    window.showToast("Bitte zuerst einen Namen eingeben.", "error");
     return;
   }
 
@@ -296,7 +306,7 @@ window.generateLogoFromForm = async function generateLogoFromForm() {
 
   if (button) {
     button.disabled = true;
-    button.textContent = "Generiere...";
+    button.textContent = "Erstelle...";
   }
 
   if (result) {
@@ -312,7 +322,7 @@ window.generateLogoFromForm = async function generateLogoFromForm() {
     notes
   });
 
-  const response = await window.authFetch("/api/generate-logo", {
+  const response = await window.authFetch("https://logomakergermany-ultimate-backend-production.up.railway.app/api/generate-logo", {
     method: "POST",
     body: JSON.stringify({
       prompt,
@@ -322,14 +332,14 @@ window.generateLogoFromForm = async function generateLogoFromForm() {
 
   if (button) {
     button.disabled = false;
-    button.textContent = "Generate Logo + Save DNA";
+    button.textContent = "Logo erstellen";
   }
 
   if (!response || !response.ok) {
     const errorPayload = response ? await response.json().catch(() => null) : null;
     const message = errorPayload?.error === "NO_COINS"
-      ? "Nicht genug Coins fuer eine Logo-Generierung."
-      : "Logo konnte nicht generiert werden.";
+      ? "Nicht genug Coins."
+      : "Logo konnte nicht erstellt werden.";
     window.showToast(message, "error");
     if (result) {
       result.innerHTML = `<div class="empty-state">${window.escapeHtml(message)}</div>`;
@@ -350,16 +360,16 @@ window.generateLogoFromForm = async function generateLogoFromForm() {
   saveLocalProject({
     name: brandName,
     type: "Logo",
-    summary: `${game || "Game offen"} - ${style || "Style offen"}`
+    summary: `${game || "Game"} - ${style || "Style"}`
   });
 
   if (result) {
     result.innerHTML = `
       <div class="result-card">
         <h3>${window.escapeHtml(brandName)}</h3>
-        <p class="muted">Deine Brand-DNA wurde gespeichert. Das Ergebnisfenster rechts zeigt das frische Logo an.</p>
+        <p class="muted">Logo erstellt. DNA wurde gespeichert.</p>
         <div class="actions-row">
-          <button class="btn secondary" type="button" onclick="downloadGeneratedLogo()">Download Logo</button>
+          <button class="btn secondary" type="button" onclick="downloadGeneratedLogo()">Logo herunterladen</button>
           <button class="btn secondary" type="button" onclick="copyLogoPrompt()">Prompt kopieren</button>
         </div>
       </div>
@@ -367,12 +377,12 @@ window.generateLogoFromForm = async function generateLogoFromForm() {
   }
 
   window.loadUser?.();
-  window.showToast("Logo generiert und Brand-DNA gespeichert.");
+  window.showToast("Logo erstellt und DNA gespeichert.");
 };
 
 window.downloadGeneratedLogo = function downloadGeneratedLogo() {
   if (!window.CreatorState.logoImage) {
-    window.showToast("Noch kein Logo zum Download vorhanden.", "error");
+    window.showToast("Kein Logo zum Download vorhanden.", "error");
     return;
   }
 
@@ -399,7 +409,7 @@ window.copyLogoPrompt = async function copyLogoPrompt() {
   });
 
   await navigator.clipboard.writeText(prompt);
-  window.showToast("Magic Prompt in die Zwischenablage kopiert.");
+  window.showToast("Prompt kopiert.");
 };
 
 window.buildMagicPrompt = function buildMagicPrompt({ name, clan, game, style, colors, notes }) {
@@ -751,20 +761,20 @@ window.initLogoDnaPage = function initLogoDnaPage() {
   buildButton?.addEventListener("click", () => {
     const input = window.collectLogoDnaInput();
     if (!input.brandName) {
-      window.showToast("Bitte zuerst einen Brand Name eingeben.", "error");
+      window.showToast("Bitte zuerst einen Markennamen eingeben.", "error");
       return;
     }
 
     currentBlueprint = window.buildLogoDnaBlueprint(input);
     window.renderLogoDnaPreview(currentBlueprint);
-    window.showToast("Logo DNA analysiert.");
+    window.showToast("DNA analysiert.");
   });
 
   saveButton?.addEventListener("click", () => {
     if (!currentBlueprint) {
       const input = window.collectLogoDnaInput();
       if (!input.brandName) {
-        window.showToast("Bitte zuerst DNA analysieren oder Brand Name eingeben.", "error");
+        window.showToast("Bitte zuerst DNA analysieren oder Namen eingeben.", "error");
         return;
       }
       currentBlueprint = window.buildLogoDnaBlueprint(input);
@@ -772,14 +782,14 @@ window.initLogoDnaPage = function initLogoDnaPage() {
 
     addLogoDnaBlueprint(currentBlueprint);
     window.renderLogoDnaLibrary();
-    window.showToast("DNA-Blueprint gespeichert.");
+    window.showToast("Blueprint gespeichert.");
   });
 
   pushButton?.addEventListener("click", () => {
     if (!currentBlueprint) {
       const input = window.collectLogoDnaInput();
       if (!input.brandName) {
-        window.showToast("Bitte zuerst DNA analysieren oder Brand Name eingeben.", "error");
+        window.showToast("Bitte zuerst DNA analysieren oder Namen eingeben.", "error");
         return;
       }
       currentBlueprint = window.buildLogoDnaBlueprint(input);
@@ -793,7 +803,7 @@ window.initLogoDnaPage = function initLogoDnaPage() {
       colors: [],
       notes: `DNA Score ${currentBlueprint.dnaScore}; prompt: ${currentBlueprint.prompt}`
     });
-    window.showToast("DNA direkt in den Logo Builder uebernommen.");
+    window.showToast("DNA in Logo uebernommen.");
   });
 
   exportButton?.addEventListener("click", window.exportLogoDnaLibrary);
@@ -810,7 +820,7 @@ window.generateStreamPackPlan = function generateStreamPackPlan() {
   const formatTypes = Array.from(document.querySelectorAll('input[name="streamFormat"]:checked')).map((input) => input.value);
 
   if (!brandName) {
-    window.showToast("Bitte gib einen Namen fuer das Streampack an.", "error");
+    window.showToast("Bitte einen Projektnamen eingeben.", "error");
     return;
   }
 
@@ -829,12 +839,12 @@ window.generateStreamPackPlan = function generateStreamPackPlan() {
     preview.innerHTML = `
       <div class="result-card">
         <h3>${window.escapeHtml(brandName)} Stream Pack</h3>
-        <p class="muted">Das Paket wurde als saubere Produktionsvorlage vorbereitet und kann jetzt als Aufgabenliste oder Design-Briefing genutzt werden.</p>
+        <p class="muted">Stream Pack erstellt. Auswahl ist gespeichert.</p>
         <div class="tag-list">
           ${selectedAssets.map((asset) => `<span class="tag">${window.escapeHtml(asset)}</span>`).join("")}
         </div>
         <ul class="mini-list list-reset">
-          ${selectedFormats.map((format) => `<li>${window.escapeHtml(format)} Ausgabeformat geplant</li>`).join("")}
+          ${selectedFormats.map((format) => `<li>Format: ${window.escapeHtml(format)}</li>`).join("")}
         </ul>
       </div>
     `;
@@ -843,12 +853,12 @@ window.generateStreamPackPlan = function generateStreamPackPlan() {
   if (downloadArea) {
     downloadArea.innerHTML = `
       <div class="empty-state">
-        Das Backend fuer ZIP-Export ist in dieser Frontend-Version noch nicht aktiv. Die Auswahl ist aber gespeichert und die Struktur laeuft jetzt ohne Fehler.
+        ZIP-Export ist noch nicht verfuegbar.
       </div>
     `;
   }
 
-  window.showToast("Stream-Pack-Konzept erstellt.");
+  window.showToast("Stream Pack erstellt.");
 };
 
 window.initVideoPage = function initVideoPage() {
@@ -868,7 +878,7 @@ window.initVideoPage = function initVideoPage() {
     if (meta) {
       meta.textContent = file
         ? `${file.name} - ${Math.round(file.size / 1024 / 1024)} MB`
-        : "Noch kein Video ausgewaehlt";
+        : "Kein Video ausgewaehlt";
     }
   });
 
@@ -884,7 +894,7 @@ window.renderDetectedHighlights = function renderDetectedHighlights(highlights) 
 
   if (!Array.isArray(highlights) || !highlights.length) {
     target.className = "empty-state";
-    target.innerHTML = "Noch keine Highlights erkannt. Starte zuerst \"Highlights erkennen\".";
+    target.innerHTML = "Noch keine Highlights erkannt.";
     return;
   }
 
@@ -924,14 +934,14 @@ window.renderDetectedHighlights = function renderDetectedHighlights(highlights) 
 
 window.analyzeVideoHighlights = async function analyzeVideoHighlights() {
   if (!window.CreatorState.uploadedVideoFile) {
-    window.showToast("Bitte zuerst ein Gameplay-Video auswaehlen.", "error");
+    window.showToast("Bitte zuerst ein Video auswaehlen.", "error");
     return;
   }
 
   const analyzeButton = document.getElementById("analyzeVideoBtn");
   if (analyzeButton) {
     analyzeButton.disabled = true;
-    analyzeButton.textContent = "Analysiere...";
+    analyzeButton.textContent = "Analyse laeuft...";
   }
 
   const highlightTypes = Array.from(document.querySelectorAll('input[name="highlightType"]:checked')).map((input) => input.value);
@@ -958,7 +968,7 @@ window.analyzeVideoHighlights = async function analyzeVideoHighlights() {
 
   let highlights = mockHighlights;
   try {
-    const response = await window.authFetch("/api/video/analyze-highlights", {
+    const response = await window.authFetch("https://logomakergermany-ultimate-backend-production.up.railway.app/api/video/analyze-highlights", {
       method: "POST",
       body: payload
     });
@@ -995,19 +1005,19 @@ window.analyzeVideoHighlights = async function analyzeVideoHighlights() {
   if (preview) {
     preview.innerHTML = `
       <div class="empty-state" style="text-align:left;">
-        Analyse abgeschlossen fuer ${window.escapeHtml(window.CreatorState.uploadedVideoName)}.
-        <br>Erkannt: ${highlights.length} Highlights (${window.escapeHtml(requestedTypes.join(", "))}).
-        <br>Waehle jetzt die Szenen per Checkbox aus.
+        Analyse abgeschlossen: ${window.escapeHtml(window.CreatorState.uploadedVideoName)}.
+        <br>${highlights.length} Highlights erkannt (${window.escapeHtml(requestedTypes.join(", "))}).
+        <br>Bitte Clips auswaehlen.
       </div>
     `;
   }
 
   if (analyzeButton) {
     analyzeButton.disabled = false;
-    analyzeButton.textContent = "1) Highlights erkennen";
+    analyzeButton.textContent = "1) Analyse starten";
   }
 
-  window.showToast("Highlights erkannt. Waehle deine Szenen aus.");
+  window.showToast("Highlights erkannt.");
 };
 
 window.secondsToTimestamp = function secondsToTimestamp(totalSeconds) {
@@ -1025,19 +1035,19 @@ window.generateVideoPlan = async function generateVideoPlan() {
   const selectedHighlights = (window.CreatorState.detectedHighlights || []).filter((item) => selectedIds.has(item.id));
 
   if (!window.CreatorState.uploadedVideoName) {
-    window.showToast("Bitte zuerst ein Gameplay-Video auswaehlen.", "error");
+    window.showToast("Bitte zuerst ein Video auswaehlen.", "error");
     return;
   }
 
   if (!selectedHighlights.length) {
-    window.showToast("Bitte zuerst Highlights erkennen und mindestens einen Clip auswaehlen.", "error");
+    window.showToast("Bitte mindestens einen Clip auswaehlen.", "error");
     return;
   }
 
   const button = document.getElementById("generateVideoBtn");
   if (button) {
     button.disabled = true;
-    button.textContent = "Erstelle Kurzvideo...";
+    button.textContent = "Erstelle Short...";
   }
 
   saveLocalProject({
@@ -1070,7 +1080,7 @@ window.generateVideoPlan = async function generateVideoPlan() {
   };
 
   let renderResult = null;
-  const response = await window.authFetch("/api/video/build-short", {
+  const response = await window.authFetch("https://logomakergermany-ultimate-backend-production.up.railway.app/api/video/build-short", {
     method: "POST",
     body: JSON.stringify(requestPayload)
   });
@@ -1081,18 +1091,18 @@ window.generateVideoPlan = async function generateVideoPlan() {
   if (result) {
     result.innerHTML = `
       <div class="result-card">
-        <h3>${window.escapeHtml(title || "AI Kurzvideo Auftrag")}</h3>
+        <h3>${window.escapeHtml(title || "Short Export")}</h3>
         <p class="muted">Upload: ${window.escapeHtml(window.CreatorState.uploadedVideoName)}</p>
         <ul class="mini-list list-reset">
-          <li>Ausgewaehlte Highlight-Clips: ${selectedHighlights.length}</li>
+          <li>Clips: ${selectedHighlights.length}</li>
           <li>Ausgabeformate: ${selectedFormats.map(window.escapeHtml).join(", ")}</li>
-          <li>Transition-Style: ${window.escapeHtml(logoStyle)} (Logo-DNA)</li>
-          <li>Animationen: Auto-Beat-Cut, Flash-Whip, Logo-Reveal zwischen Highlights</li>
-          <li>Output: ${(renderResult?.videoUrl ? "Render abgeschlossen" : "Render-Queue vorbereitet (Fallback-Modus)")}</li>
+          <li>Transition-Style: ${window.escapeHtml(logoStyle)}</li>
+          <li>Animationen: Auto-Beat-Cut, Flash-Whip, Logo-Reveal</li>
+          <li>Status: ${(renderResult?.videoUrl ? "Render abgeschlossen" : "Render vorbereitet")}</li>
         </ul>
         ${renderResult?.videoUrl ? `
           <div class="actions-row">
-            <a class="btn secondary" href="${window.escapeHtml(renderResult.videoUrl)}" target="_blank" rel="noopener noreferrer">Kurzvideo oeffnen</a>
+            <a class="btn secondary" href="${window.escapeHtml(renderResult.videoUrl)}" target="_blank" rel="noopener noreferrer">Video oeffnen</a>
           </div>
         ` : ""}
       </div>
@@ -1103,8 +1113,8 @@ window.generateVideoPlan = async function generateVideoPlan() {
   if (preview) {
     preview.innerHTML = `
       <div class="empty-state" style="text-align:left;">
-        Kurzvideo-Builder fertig.
-        <br>${selectedHighlights.length} Highlight-Clips wurden in eine TikTok-Storyline sortiert.
+        Short ist vorbereitet.
+        <br>${selectedHighlights.length} Clips wurden sortiert.
         <br>Transitions folgen deinem Logo-Style (${window.escapeHtml(logoStyle)}).
       </div>
     `;
@@ -1112,10 +1122,10 @@ window.generateVideoPlan = async function generateVideoPlan() {
 
   if (button) {
     button.disabled = false;
-    button.textContent = "2) Short Video erstellen";
+    button.textContent = "2) Short erstellen";
   }
 
-  window.showToast("Video-Builder-Vorlage erstellt.");
+  window.showToast("Video exportiert.");
 };
 
 window.initSystemPage = async function initSystemPage() {

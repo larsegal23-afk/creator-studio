@@ -1,68 +1,96 @@
 <section class="page-stack">
   <article class="hero-card">
     <div class="hero-copy">
-      <p class="hero-kicker">Studio Cockpit</p>
-      <h1>Alle Creator-Bausteine auf einer sauberen Arbeitsflaeche.</h1>
+      <p class="hero-kicker">Dashboard</p>
+      <h1>Willkommen im Creator Studio.</h1>
       <p>
-        Das Dashboard verbindet deine Tabellen-Idee mit einer klaren App-Struktur: Branding links starten, rechts Vorschau und unten Aktivitaeten und Projektkarten.
+        Logo-Generierung, Video-Verarbeitung und alle Premium-Features an einem Ort.
       </p>
-      <div class="hero-actions">
-        <button class="btn" type="button" onclick="loadPage('logo')">Logo starten</button>
-        <button class="btn secondary" type="button" onclick="loadPage('video')">Video Builder</button>
-        <button class="btn secondary" type="button" onclick="loadPage('stream')">Stream Pack</button>
-      </div>
     </div>
     <div class="hero-visual"></div>
   </article>
 
-  <section class="stats-grid">
-    <article class="stat-card">
-      <p class="muted">Coins</p>
-      <strong id="coinsValue" class="stat-value">-</strong>
-    </article>
-    <article class="stat-card">
-      <p class="muted">Lokale Projekte</p>
-      <strong id="projectsValue" class="stat-value">0</strong>
-    </article>
-    <article class="stat-card">
-      <p class="muted">Deployment</p>
-      <strong class="stat-value">Live</strong>
-    </article>
-  </section>
-
-  <section class="grid">
-    <article class="card">
-      <div class="section-head">
-        <div>
-          <h2>Coins aufladen</h2>
-          <p class="muted">Direkter Stripe-Checkout ueber das Backend.</p>
+  <article class="card">
+    <div class="section-head">
+      <div>
+        <h2>Deine Übersicht</h2>
+        <p class="muted">Aktuelle Statistiken und Projekte.</p>
+      </div>
+    </div>
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">💰</div>
+        <div class="stat-content">
+          <p class="stat-label">Coins</p>
+          <p class="stat-value" id="coinsValue">-</p>
         </div>
       </div>
-      <div class="actions-row">
-        <button class="btn" type="button" onclick="buyCoins('small')">100 Coins</button>
-        <button class="btn secondary" type="button" onclick="buyCoins('medium')">300 Coins</button>
-        <button class="btn secondary" type="button" onclick="buyCoins('large')">700 Coins</button>
-      </div>
-    </article>
-
-    <article class="card">
-      <div class="section-head">
-        <div>
-          <h2>Projekt-Uebersicht</h2>
-          <p class="muted">Zuletzt erzeugte Builder-Karten und lokale Entwuerfe.</p>
+      
+      <div class="stat-card">
+        <div class="stat-icon">📁</div>
+        <div class="stat-content">
+          <p class="stat-label">Projekte</p>
+          <p class="stat-value" id="projectsValue">-</p>
         </div>
       </div>
-      <div id="projectOverview" class="tool-grid"></div>
-    </article>
-  </section>
+      
+      <div class="stat-card">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-content">
+          <p class="stat-label">Aktivität</p>
+          <p class="stat-value">Heute</p>
+        </div>
+      </div>
+    </div>
+  </article>
 
   <article class="card">
     <div class="section-head">
       <div>
-        <h2>Letzte Aktivitaeten</h2>
-        <p class="muted">Direkt aus dem deployten Backend geladen.</p>
+        <h2>Schnell-Aktionen</h2>
+        <p class="muted">Direkter Zugriff auf alle Features.</p>
       </div>
     </div>
-    <div id="activityFeed" class="grid"></div>
+    
+    <div class="quick-actions-grid">
+      <button class="btn secondary" onclick="window.loadPage('logo')">
+        <span class="icon">🎨</span>
+        Logo erstellen
+      </button>
+      
+      <button class="btn secondary" onclick="window.loadPage('video')">
+        <span class="icon">🎬</span>
+        Video bearbeiten
+      </button>
+      
+      <button class="btn secondary" onclick="window.loadPage('stream')">
+        <span class="icon">📺</span>
+        Stream Pack
+      </button>
+      
+      <button class="btn primary" onclick="window.loadPage('billing')">
+        <span class="icon">💰</span>
+        Coins aufladen
+      </button>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="section-head">
+      <div>
+        <h2>Aktuelle Projekte</h2>
+        <p class="muted">Deine letzten erstellten Inhalte.</p>
+      </div>
+    </div>
+    
+    <div id="projectOverview" class="project-grid">
+      <div class="empty-state">
+        <p>Keine Projekte gefunden.</p>
+        <button class="btn primary" onclick="window.loadPage('logo')">
+          Erste Logo erstellen
+        </button>
+      </div>
+    </div>
   </article>
 </section>

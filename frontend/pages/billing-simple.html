@@ -1,0 +1,111 @@
+<section class="page-stack">
+  <article class="hero-card">
+    <div class="hero-copy">
+      <p class="hero-kicker">Coins</p>
+      <h1>Creator Studio Coins aufladen.</h1>
+      <p>
+        Kaufe Coins für Logo-Generierung, Video-Verarbeitung und alle Premium-Features.
+      </p>
+    </div>
+    <div class="hero-visual"></div>
+  </article>
+
+  <article class="card">
+    <div class="section-head">
+      <div>
+        <h2>Coins-Pakete</h2>
+        <p class="muted">Wähle das passende Paket für deine Projekte.</p>
+      </div>
+    </div>
+
+    <div class="pricing-grid">
+      <article class="pricing-card">
+        <div class="pricing-header">
+          <h3>Starter</h3>
+          <div class="price">
+            <span class="amount">4,99</span>
+            <span class="currency">EUR</span>
+          </div>
+          <p class="muted">50 Coins</p>
+        </div>
+        <ul class="pricing-features">
+          <li>Logo-Generierung</li>
+          <li>Video-Highlights</li>
+          <li>Stream-Assets</li>
+        </ul>
+        <button class="btn" onclick="window.coinsService.purchaseCoins('starter')">
+          50 Coins kaufen
+        </button>
+      </article>
+
+      <article class="pricing-card featured">
+        <div class="pricing-header">
+          <span class="badge">Beliebt</span>
+          <h3>Professional</h3>
+          <div class="price">
+            <span class="amount">12,99</span>
+            <span class="currency">EUR</span>
+          </div>
+          <p class="muted">150 Coins</p>
+        </div>
+        <ul class="pricing-features">
+          <li>Alle Features</li>
+          <li>HD Video-Export</li>
+          <li>Priority Support</li>
+          <li>Erweiterte KI-Tools</li>
+        </ul>
+        <button class="btn primary" onclick="window.coinsService.purchaseCoins('professional')">
+          150 Coins kaufen
+        </button>
+      </article>
+
+      <article class="pricing-card">
+        <div class="pricing-header">
+          <h3>Enterprise</h3>
+          <div class="price">
+            <span class="amount">39,99</span>
+            <span class="currency">EUR</span>
+          </div>
+          <p class="muted">500 Coins</p>
+        </div>
+        <ul class="pricing-features">
+          <li>Unlimited Projects</li>
+          <li>4K Video-Export</li>
+          <li>Custom Branding</li>
+          <li>API Access</li>
+        </ul>
+        <button class="btn" onclick="window.coinsService.purchaseCoins('enterprise')">
+          500 Coins kaufen
+        </button>
+      </article>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="section-head">
+      <div>
+        <h2>Dein Kontostand</h2>
+        <p class="muted">Aktuelle Coins und Transaktionen.</p>
+      </div>
+    </div>
+    
+    <div class="balance-display">
+      <div class="balance-item">
+        <span class="label">Aktueller Kontostand:</span>
+        <span class="value" id="currentCoins">-</span>
+        <span class="unit">Coins</span>
+      </div>
+    </div>
+
+    <div class="quick-actions">
+      <button class="btn secondary" onclick="window.coinsService.refreshCoins()">
+        <span class="icon">↻</span>
+        Coins aktualisieren
+      </button>
+      <button class="btn secondary" onclick="window.testBackend()">
+        <span class="icon">🔧</span>
+        Backend testen
+      </button>
+    </div>
+  </article>
+</section>

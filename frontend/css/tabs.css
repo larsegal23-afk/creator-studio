@@ -1,0 +1,38 @@
+/* Tab Styles */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  margin-bottom: 1.5rem;
+}
+
+.tab {
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted, #6b7280);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.tab:hover {
+  color: var(--text, #111827);
+  background: var(--muted, #f9fafb);
+}
+
+.tab.active {
+  color: var(--primary, #3b82f6);
+  border-bottom-color: var(--primary, #3b82f6);
+  background: var(--primary-bg, #eff6ff);
+}
+
+.auth-form {
+  display: block;
+}
+
+.auth-form.hidden {
+  display: none;
+}
