@@ -10,6 +10,10 @@ dotenv.config()
 
 const app = express()
 
+/* ================================
+CORS
+================================ */
+
 app.use(cors({
   origin: [
     "http://localhost:5500",
@@ -17,7 +21,7 @@ app.use(cors({
     "https://logomakergermany-kreativtool.web.app",
     "https://logomakergermany-kreativtool.firebaseapp.com"
   ],
-  methods: ["GET", "POST", "OPTIONS"],
+  methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }))
@@ -30,13 +34,27 @@ app.use(express.json())
 FIREBASE
 ================================ */
 
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON)
+let db = null
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-})
+try {
+  if (!process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    console.error("❌ FIREBASE_SERVICE_ACCOUNT_JSON missing")
+    process.exit(1)
+  }
 
-const db = admin.firestore()
+  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON)
+
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  })
+
+  db = admin.firestore()
+  console.log("🔥 Firebase connected")
+
+} catch (error) {
+  console.error("❌ Firebase error:", error)
+  process.exit(1)
+}
 
 /* ================================
 AUTH
@@ -54,7 +72,8 @@ async function requireAuth(req, res, next) {
     req.user = decoded
 
     next()
-  } catch {
+  } catch (error) {
+    console.error("Auth error:", error)
     res.status(401).json({ error: "Invalid token" })
   }
 }
@@ -84,6 +103,130 @@ const upload = multer({
 })
 
 /* ================================
+HEALTH CHECK
+================================ */
+
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "ok",
+    firebase: !!db,
+    timestamp: new Date().toISOString()
+  })
+})
+
+/* ================================
+TEST ROUTE
+================================ */
+
+app.get("/api/test", (req, res) => {
+  res.json({ status: "ok", message: "API is working" })
+})
+
+/* ================================
+GET COINS
+================================ */
+
+app.get("/api/get-coins", requireAuth, async (req, res) => {
+  try {
+    const userRef = db.collection("users").doc(req.user.uid)
+    const doc = await userRef.get()
+
+    if (!doc.exists) {
+      // Create new user with 50 starter coins
+      await userRef.set({
+        coins: 50,
+        email: req.user.email || null,
+        createdAt: new Date()
+      })
+      return res.json({ coins: 50, isNewUser: true })
+    }
+
+    const data = doc.data()
+    res.json({ 
+      coins: data.coins || 0,
+      email: data.email || req.user.email
+    })
+
+  } catch (error) {
+    console.error("Get coins error:", error)
+    res.status(500).json({ error: "Failed to get coins" })
+  }
+})
+
+/* ================================
+USE COINS
+================================ */
+
+app.post("/api/use-coins", requireAuth, async (req, res) => {
+  try {
+    const { amount = 1 } = req.body
+    const userRef = db.collection("users").doc(req.user.uid)
+
+    const doc = await userRef.get()
+    const currentCoins = doc.data()?.coins || 0
+
+    if (currentCoins < amount) {
+      return res.status(400).json({ 
+        error: "Not enough coins",
+        current: currentCoins,
+        required: amount
+      })
+    }
+
+    const newBalance = currentCoins - amount
+    await userRef.update({
+      coins: newBalance,
+      lastUsed: new Date()
+    })
+
+    res.json({ 
+      success: true, 
+      remaining: newBalance,
+      used: amount
+    })
+
+  } catch (error) {
+    console.error("Use coins error:", error)
+    res.status(500).json({ error: "Failed to use coins" })
+  }
+})
+
+/* ================================
+ADD COINS (for Stripe Webhook or admin)
+================================ */
+
+app.post("/api/add-coins", requireAuth, async (req, res) => {
+  try {
+    const { amount } = req.body
+    
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: "Invalid amount" })
+    }
+
+    const userRef = db.collection("users").doc(req.user.uid)
+    const doc = await userRef.get()
+    const currentCoins = doc.data()?.coins || 0
+
+    const newBalance = currentCoins + amount
+    await userRef.update({
+      coins: newBalance,
+      lastPurchase: new Date()
+    })
+
+    res.json({
+      success: true,
+      previous: currentCoins,
+      added: amount,
+      newBalance: newBalance
+    })
+
+  } catch (error) {
+    console.error("Add coins error:", error)
+    res.status(500).json({ error: "Failed to add coins" })
+  }
+})
+
+/* ================================
 UPLOAD ROUTE
 ================================ */
 
@@ -95,7 +238,8 @@ app.post("/api/upload", requireAuth, upload.single("file"), (req, res) => {
 
     res.json({
       success: true,
-      filename: req.file.filename
+      filename: req.file.filename,
+      path: `/uploads/${req.file.filename}`
     })
 
   } catch (err) {
@@ -105,17 +249,17 @@ app.post("/api/upload", requireAuth, upload.single("file"), (req, res) => {
 })
 
 /* ================================
-TEST ROUTE
-================================ */
-
-app.get("/api/test", (req, res) => {
-  res.json({ status: "ok" })
-})
-
-/* ================================
 START
 ================================ */
 
-app.listen(process.env.PORT || 3000, () => {
-  console.log("SERVER RUNNING")
+const PORT = process.env.PORT || 3000
+
+app.listen(PORT, () => {
+  console.log("=== SERVER LIVE ===")
+  console.log(`Port: ${PORT}`)
+  console.log(`Health: /api/health`)
+  console.log(`Test: /api/test`)
+  console.log(`Get Coins: /api/get-coins`)
+  console.log(`Use Coins: /api/use-coins`)
+  console.log(`Add Coins: /api/add-coins`)
 })
