@@ -159,7 +159,7 @@ app.post("/api/add-coins", requireAuth, async (req, res) => {
 // ================================
 app.post("/api/generate-logo", requireAuth, async (req, res) => {
   try {
-    const { brandName, style, description } = req.body
+    const { brandName, gameGenre, style, description, colors } = req.body
     const userRef = db.collection("users").doc(req.user.uid)
     
     const doc = await userRef.get()
@@ -172,6 +172,10 @@ app.post("/api/generate-logo", requireAuth, async (req, res) => {
     // Deduct coins
     await userRef.update({ coins: currentCoins - 5 })
     
+    // Generate colors for placeholder if not provided
+    const primaryColor = (colors && colors[0]) ? colors[0].replace('#', '') : 'ff6b35'
+    const bgColor = (colors && colors[1]) ? colors[1].replace('#', '') : '1a1a2e'
+    
     // Return mock logo result (in real app, this would call an AI service)
     res.json({
       success: true,
@@ -179,9 +183,11 @@ app.post("/api/generate-logo", requireAuth, async (req, res) => {
       remaining: currentCoins - 5,
       logo: {
         brandName,
+        gameGenre,
         style,
         description,
-        url: `https://via.placeholder.com/400x400/1a1a2e/ff6b35?text=${encodeURIComponent(brandName)}`,
+        colors: colors || ['#ff6b35', '#1a1a2e'],
+        url: `https://via.placeholder.com/400x400/${bgColor}/${primaryColor}?text=${encodeURIComponent(brandName)}`,
         createdAt: new Date().toISOString()
       }
     })
@@ -193,11 +199,53 @@ app.post("/api/generate-logo", requireAuth, async (req, res) => {
 })
 
 // ================================
+// GENERATE STREAMPACK (5 Coins pro Element)
+// ================================
+app.post("/api/generate-streampack", requireAuth, async (req, res) => {
+  try {
+    const { items, logoDNA } = req.body
+    const userRef = db.collection("users").doc(req.user.uid)
+    
+    const doc = await userRef.get()
+    const currentCoins = doc.data()?.coins || 0
+    
+    const cost = items.length * 5
+    
+    if (currentCoins < cost) {
+      return res.status(402).json({ error: "Not enough coins", required: cost, current: currentCoins })
+    }
+    
+    // Deduct coins
+    await userRef.update({ coins: currentCoins - cost })
+    
+    // Generate streampack items (mock)
+    const generatedItems = items.map(item => ({
+      id: item,
+      name: item,
+      url: `https://via.placeholder.com/400x400/1a1a2e/ff6b35?text=${encodeURIComponent(item)}`,
+      transparent: true
+    }))
+    
+    res.json({
+      success: true,
+      coinsUsed: cost,
+      remaining: currentCoins - cost,
+      items: generatedItems,
+      createdAt: new Date().toISOString()
+    })
+    
+  } catch (error) {
+    console.error("Generate streampack error:", error)
+    res.status(500).json({ error: "Failed to generate streampack" })
+  }
+})
+
+// ================================
 // CREATE HIGHLIGHTS (15 Coins)
 // ================================
 app.post("/api/create-highlights", requireAuth, async (req, res) => {
   try {
-    const { streamUrl, length } = req.body
+    const { videoName, format, highlightTypes, streamUrl, length } = req.body
     const userRef = db.collection("users").doc(req.user.uid)
     
     const doc = await userRef.get()
@@ -210,19 +258,47 @@ app.post("/api/create-highlights", requireAuth, async (req, res) => {
     // Deduct coins
     await userRef.update({ coins: currentCoins - 15 })
     
+    // Generate clips based on selected highlight types
+    const clips = []
+    let clipCount = 0
+    
+    if (highlightTypes?.actionBased) {
+      clips.push({ start: "00:05:23", end: "00:05:38", title: "Action Highlight", type: "action" })
+      clipCount++
+    }
+    if (highlightTypes?.clip) {
+      clips.push({ start: "00:12:45", end: "00:13:00", title: "Best Clip", type: "clip" })
+      clipCount++
+    }
+    if (highlightTypes?.funnyMoments) {
+      clips.push({ start: "00:18:30", end: "00:18:45", title: "Funny Moment", type: "funny" })
+      clipCount++
+    }
+    if (highlightTypes?.bestAutoAim) {
+      clips.push({ start: "00:25:10", end: "00:25:25", title: "Best Auto Aim", type: "skill" })
+      clipCount++
+    }
+    
+    // If no types selected or old request format, provide default clips
+    if (clips.length === 0) {
+      clips.push(
+        { start: "00:05:23", end: "00:05:38", title: "Best moment", type: "highlight" },
+        { start: "00:12:45", end: "00:13:00", title: "Highlight", type: "highlight" },
+        { start: "00:25:10", end: "00:25:25", title: "Epic play", type: "highlight" }
+      )
+    }
+    
     // Return mock highlights result
     res.json({
       success: true,
       coinsUsed: 15,
       remaining: currentCoins - 15,
       highlights: {
-        streamUrl,
-        length,
-        clips: [
-          { start: "00:05:23", end: "00:05:38", title: "Best moment" },
-          { start: "00:12:45", end: "00:13:00", title: "Highlight" },
-          { start: "00:25:10", end: "00:25:25", title: "Epic play" }
-        ],
+        videoName: videoName || 'video',
+        format: format || 'shorts',
+        length: length || '60',
+        clips,
+        totalClips: clips.length,
         createdAt: new Date().toISOString()
       }
     })
@@ -242,6 +318,7 @@ app.listen(PORT, () => {
   console.log(`💰 Get Coins: /api/get-coins`)
   console.log(`💸 Use Coins: /api/use-coins`)
   console.log(`➕ Add Coins: /api/add-coins`)
-  console.log(`🎨 Generate Logo: /api/generate-logo`)
-  console.log(`🎬 Create Highlights: /api/create-highlights`)
+  console.log(`🎨 Generate Logo: /api/generate-logo (5 Coins)`)
+  console.log(`📦 Generate Streampack: /api/generate-streampack (5 Coins/Item)`)
+  console.log(`🎬 Create Highlights: /api/create-highlights (15 Coins)`)
 })
