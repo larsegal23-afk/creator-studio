@@ -6,41 +6,41 @@ import admin from "firebase-admin"
 dotenv.config()
 
 const app = express()
+const PORT = process.env.PORT || 3000
 
-// CORS - Allow all for now
-app.use(cors({
-  origin: true,
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}))
+// ================================
+// CORS - KOMPLETT OFFEN
+// ================================
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*")
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization")
+  
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200)
+  }
+  next()
+})
 
-app.options("*", cors())
 app.use(express.json())
 
-// Firebase
+// ================================
+// FIREBASE
+// ================================
 let db = null
 
 try {
-  if (!process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
-    console.error("FIREBASE_SERVICE_ACCOUNT_JSON missing")
-    process.exit(1)
-  }
-
   const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON)
-
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  })
-
+  admin.initializeApp({ credential: admin.credential.cert(serviceAccount) })
   db = admin.firestore()
-  console.log("Firebase connected")
-
+  console.log("✅ Firebase connected")
 } catch (error) {
-  console.error("Firebase error:", error.message)
-  process.exit(1)
+  console.error("❌ Firebase error:", error.message)
 }
 
-// Auth Middleware
+// ================================
+// AUTH MIDDLEWARE
+// ================================
 async function requireAuth(req, res, next) {
   try {
     const authHeader = req.headers.authorization
@@ -62,33 +62,27 @@ async function requireAuth(req, res, next) {
   }
 }
 
-// Health Check
+// ================================
+// HEALTH
+// ================================
 app.get("/api/health", (req, res) => {
-  res.json({
-    status: "ok",
-    firebase: db !== null,
-    timestamp: new Date().toISOString()
-  })
+  res.json({ status: "ok", firebase: !!db, time: new Date().toISOString() })
 })
 
-// Test Route
-app.get("/api/test", (req, res) => {
-  res.json({ status: "ok", message: "API working" })
-})
-
-// Get Coins
+// ================================
+// GET COINS
+// ================================
 app.get("/api/get-coins", requireAuth, async (req, res) => {
   try {
     if (!db) {
       return res.status(500).json({ error: "Database not connected" })
     }
 
-    const userId = req.user.uid
-    const userRef = db.collection("users").doc(userId)
+    const userRef = db.collection("users").doc(req.user.uid)
     const doc = await userRef.get()
 
     if (!doc.exists) {
-      // Create new user
+      // Create new user with 50 starter coins
       await userRef.set({
         coins: 50,
         email: req.user.email || null,
@@ -101,89 +95,65 @@ app.get("/api/get-coins", requireAuth, async (req, res) => {
     res.json({ coins: data.coins || 0 })
 
   } catch (error) {
-    console.error("Get coins error:", error.message)
+    console.error("Get coins error:", error)
     res.status(500).json({ error: "Failed to get coins" })
   }
 })
 
-// Use Coins
+// ================================
+// USE COINS
+// ================================
 app.post("/api/use-coins", requireAuth, async (req, res) => {
   try {
     const { amount = 1 } = req.body
-    const userId = req.user.uid
-    const userRef = db.collection("users").doc(userId)
+    const userRef = db.collection("users").doc(req.user.uid)
 
     const doc = await userRef.get()
     const currentCoins = doc.data()?.coins || 0
 
     if (currentCoins < amount) {
-      return res.status(400).json({
-        error: "Not enough coins",
-        current: currentCoins,
-        required: amount
-      })
+      return res.status(400).json({ error: "Not enough coins", current: currentCoins, required: amount })
     }
 
-    const newBalance = currentCoins - amount
-    await userRef.update({
-      coins: newBalance,
-      lastUsed: new Date().toISOString()
-    })
-
-    res.json({
-      success: true,
-      remaining: newBalance,
-      used: amount
-    })
+    await userRef.update({ coins: currentCoins - amount })
+    res.json({ success: true, remaining: currentCoins - amount, used: amount })
 
   } catch (error) {
-    console.error("Use coins error:", error.message)
+    console.error("Use coins error:", error)
     res.status(500).json({ error: "Failed to use coins" })
   }
 })
 
-// Add Coins (for purchases)
+// ================================
+// ADD COINS (fuer Purchases)
+// ================================
 app.post("/api/add-coins", requireAuth, async (req, res) => {
   try {
     const { amount } = req.body
-
     if (!amount || amount <= 0) {
       return res.status(400).json({ error: "Invalid amount" })
     }
 
-    const userId = req.user.uid
-    const userRef = db.collection("users").doc(userId)
-
+    const userRef = db.collection("users").doc(req.user.uid)
     const doc = await userRef.get()
     const currentCoins = doc.data()?.coins || 0
 
-    const newBalance = currentCoins + amount
-    await userRef.update({
-      coins: newBalance,
-      lastPurchase: new Date().toISOString()
-    })
-
-    res.json({
-      success: true,
-      previous: currentCoins,
-      added: amount,
-      newBalance: newBalance
-    })
+    await userRef.update({ coins: currentCoins + amount })
+    res.json({ success: true, previous: currentCoins, added: amount, newBalance: currentCoins + amount })
 
   } catch (error) {
-    console.error("Add coins error:", error.message)
+    console.error("Add coins error:", error)
     res.status(500).json({ error: "Failed to add coins" })
   }
 })
 
-// Start Server
-const PORT = process.env.PORT || 3000
-
+// ================================
+// START
+// ================================
 app.listen(PORT, () => {
-  console.log("Server running on port", PORT)
-  console.log("Health: /api/health")
-  console.log("Test: /api/test")
-  console.log("Get Coins: /api/get-coins")
-  console.log("Use Coins: /api/use-coins")
-  console.log("Add Coins: /api/add-coins")
+  console.log(`🚀 Server running on port ${PORT}`)
+  console.log(`📊 Health: /api/health`)
+  console.log(`💰 Get Coins: /api/get-coins`)
+  console.log(`💸 Use Coins: /api/use-coins`)
+  console.log(`➕ Add Coins: /api/add-coins`)
 })
