@@ -155,6 +155,85 @@ app.post("/api/add-coins", requireAuth, async (req, res) => {
 })
 
 // ================================
+// GENERATE LOGO (5 Coins)
+// ================================
+app.post("/api/generate-logo", requireAuth, async (req, res) => {
+  try {
+    const { brandName, style, description } = req.body
+    const userRef = db.collection("users").doc(req.user.uid)
+    
+    const doc = await userRef.get()
+    const currentCoins = doc.data()?.coins || 0
+    
+    if (currentCoins < 5) {
+      return res.status(402).json({ error: "Not enough coins", required: 5, current: currentCoins })
+    }
+    
+    // Deduct coins
+    await userRef.update({ coins: currentCoins - 5 })
+    
+    // Return mock logo result (in real app, this would call an AI service)
+    res.json({
+      success: true,
+      coinsUsed: 5,
+      remaining: currentCoins - 5,
+      logo: {
+        brandName,
+        style,
+        description,
+        url: `https://via.placeholder.com/400x400/1a1a2e/ff6b35?text=${encodeURIComponent(brandName)}`,
+        createdAt: new Date().toISOString()
+      }
+    })
+    
+  } catch (error) {
+    console.error("Generate logo error:", error)
+    res.status(500).json({ error: "Failed to generate logo" })
+  }
+})
+
+// ================================
+// CREATE HIGHLIGHTS (15 Coins)
+// ================================
+app.post("/api/create-highlights", requireAuth, async (req, res) => {
+  try {
+    const { streamUrl, length } = req.body
+    const userRef = db.collection("users").doc(req.user.uid)
+    
+    const doc = await userRef.get()
+    const currentCoins = doc.data()?.coins || 0
+    
+    if (currentCoins < 15) {
+      return res.status(402).json({ error: "Not enough coins", required: 15, current: currentCoins })
+    }
+    
+    // Deduct coins
+    await userRef.update({ coins: currentCoins - 15 })
+    
+    // Return mock highlights result
+    res.json({
+      success: true,
+      coinsUsed: 15,
+      remaining: currentCoins - 15,
+      highlights: {
+        streamUrl,
+        length,
+        clips: [
+          { start: "00:05:23", end: "00:05:38", title: "Best moment" },
+          { start: "00:12:45", end: "00:13:00", title: "Highlight" },
+          { start: "00:25:10", end: "00:25:25", title: "Epic play" }
+        ],
+        createdAt: new Date().toISOString()
+      }
+    })
+    
+  } catch (error) {
+    console.error("Create highlights error:", error)
+    res.status(500).json({ error: "Failed to create highlights" })
+  }
+})
+
+// ================================
 // START
 // ================================
 app.listen(PORT, () => {
@@ -163,4 +242,6 @@ app.listen(PORT, () => {
   console.log(`💰 Get Coins: /api/get-coins`)
   console.log(`💸 Use Coins: /api/use-coins`)
   console.log(`➕ Add Coins: /api/add-coins`)
+  console.log(`🎨 Generate Logo: /api/generate-logo`)
+  console.log(`🎬 Create Highlights: /api/create-highlights`)
 })
