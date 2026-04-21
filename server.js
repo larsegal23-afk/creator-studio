@@ -2,20 +2,20 @@ import express from "express"
 import cors from "cors"
 import dotenv from "dotenv"
 import admin from "firebase-admin"
+import multer from "multer"
+import path from "path"
+import fs from "fs"
 
 dotenv.config()
 
 const app = express()
 
-/* ================================
-CORS
-================================ */
-
 app.use(cors({
   origin: [
     "http://localhost:5500",
     "http://127.0.0.1:5500",
-    "https://logomakergermany-kreativtool.web.app"
+    "https://logomakergermany-kreativtool.web.app",
+    "https://logomakergermany-kreativtool.firebaseapp.com"
   ],
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -27,31 +27,16 @@ app.options("*", cors())
 app.use(express.json())
 
 /* ================================
-FIREBASE (FINAL FIX)
+FIREBASE
 ================================ */
 
-let db = null
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON)
 
-try {
-  if (!process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
-    console.error("❌ FIREBASE_SERVICE_ACCOUNT_JSON missing")
-    process.exit(1)
-  }
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+})
 
-  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON)
-
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  })
-
-  db = admin.firestore()
-
-  console.log("🔥 Firebase connected")
-
-} catch (error) {
-  console.error("❌ Firebase error:", error)
-  process.exit(1)
-}
+const db = admin.firestore()
 
 /* ================================
 AUTH
@@ -69,104 +54,62 @@ async function requireAuth(req, res, next) {
     req.user = decoded
 
     next()
-  } catch (error) {
+  } catch {
     res.status(401).json({ error: "Invalid token" })
   }
 }
 
 /* ================================
-GET COINS
+UPLOAD SYSTEM
 ================================ */
 
-app.get("/api/get-coins", requireAuth, async (req, res) => {
-  try {
-    const userRef = db.collection("users").doc(req.user.uid)
-    const doc = await userRef.get()
+const uploadDir = path.join(process.cwd(), "uploads")
 
-    if (!doc.exists) {
-      await userRef.set({
-        coins: 50,
-        createdAt: new Date()
-      })
-      return res.json({ coins: 50 })
-    }
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir)
+}
 
-    res.json({ coins: doc.data().coins || 0 })
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + "-" + file.originalname.replace(/\s/g, "_"))
+  }
+})
 
-  } catch (error) {
-    res.status(500).json({ error: "Failed to get coins" })
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 1024 * 1024 * 200 // 200MB
   }
 })
 
 /* ================================
-USE COINS
+UPLOAD ROUTE
 ================================ */
 
-app.post("/api/use-coins", requireAuth, async (req, res) => {
+app.post("/api/upload", requireAuth, upload.single("file"), (req, res) => {
   try {
-    const { amount } = req.body
-    const userRef = db.collection("users").doc(req.user.uid)
-
-    const doc = await userRef.get()
-    const coins = doc.data()?.coins || 0
-
-    if (coins < amount) {
-      return res.status(400).json({ error: "Not enough coins" })
+    if (!req.file) {
+      return res.status(400).json({ error: "No file" })
     }
 
-    await userRef.update({
-      coins: coins - amount
-    })
-
-    res.json({ success: true, remaining: coins - amount })
-
-  } catch (error) {
-    res.status(500).json({ error: "Failed to use coins" })
-  }
-})
-
-/* ================================
-GENERATE LOGO (5 COINS)
-================================ */
-
-app.post("/api/generate-logo", requireAuth, async (req, res) => {
-  try {
-    const userRef = db.collection("users").doc(req.user.uid)
-    const doc = await userRef.get()
-
-    const coins = doc.data()?.coins || 0
-
-    if (coins < 5) {
-      return res.status(402).json({ error: "Not enough coins" })
-    }
-
-    await userRef.update({
-      coins: coins - 5
-    })
-
-    console.log("🔥 5 coins deducted")
-
-    // MOCK IMAGE
     res.json({
       success: true,
-      coinsUsed: 5,
-      remaining: coins - 5
+      filename: req.file.filename
     })
 
-  } catch (error) {
-    res.status(500).json({ error: "Generation failed" })
+  } catch (err) {
+    console.error("UPLOAD ERROR:", err)
+    res.status(500).json({ error: "Upload failed" })
   }
 })
 
 /* ================================
-HEALTH CHECK
+TEST ROUTE
 ================================ */
 
-app.get("/api/health", (req, res) => {
-  res.json({
-    status: "ok",
-    firebase: !!db
-  })
+app.get("/api/test", (req, res) => {
+  res.json({ status: "ok" })
 })
 
 /* ================================
@@ -174,5 +117,5 @@ START
 ================================ */
 
 app.listen(process.env.PORT || 3000, () => {
-  console.log("=== SERVER LIVE ===")
+  console.log("SERVER RUNNING")
 })
