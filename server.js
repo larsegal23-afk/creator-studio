@@ -61,7 +61,14 @@ try {
   })
 
   db = admin.firestore()
-  console.log("🔥 Firebase connected")
+  
+  // Test Firestore connection
+  try {
+    await db.collection("_test_").doc("_test_").get()
+    console.log("🔥 Firebase connected")
+  } catch (firestoreError) {
+    console.error("❌ Firestore connection test failed:", firestoreError.message)
+  }
 
 } catch (error) {
   console.error("❌ Firebase error:", error)
@@ -140,11 +147,19 @@ GET COINS
 
 app.get("/api/get-coins", requireAuth, async (req, res) => {
   try {
+    console.log("🔍 get-coins called for user:", req.user.uid)
+    
+    if (!db) {
+      console.error("❌ Firestore not initialized")
+      return res.status(500).json({ error: "Database not connected" })
+    }
+    
     const userRef = db.collection("users").doc(req.user.uid)
     const doc = await userRef.get()
 
     if (!doc.exists) {
       // Create new user with 50 starter coins
+      console.log("👤 Creating new user with 50 coins:", req.user.uid)
       await userRef.set({
         coins: 50,
         email: req.user.email || null,
@@ -154,14 +169,15 @@ app.get("/api/get-coins", requireAuth, async (req, res) => {
     }
 
     const data = doc.data()
+    console.log("✅ User coins loaded:", data.coins || 0)
     res.json({ 
       coins: data.coins || 0,
       email: data.email || req.user.email
     })
 
   } catch (error) {
-    console.error("Get coins error:", error)
-    res.status(500).json({ error: "Failed to get coins" })
+    console.error("❌ Get coins error:", error.message, error.stack)
+    res.status(500).json({ error: "Failed to get coins", details: error.message })
   }
 })
 
