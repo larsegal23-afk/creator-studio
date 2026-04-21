@@ -43,22 +43,29 @@ try {
 // ================================
 async function requireAuth(req, res, next) {
   try {
+    console.log("Auth check - Path:", req.path)
+    console.log("Auth header:", req.headers.authorization ? "Present" : "Missing")
+    
     const authHeader = req.headers.authorization
     if (!authHeader) {
+      console.log("No auth header")
       return res.status(401).json({ error: "No authorization header" })
     }
 
     const token = authHeader.split(" ")[1]
     if (!token) {
+      console.log("No token in header")
       return res.status(401).json({ error: "No token provided" })
     }
 
+    console.log("Verifying token...")
     const decoded = await admin.auth().verifyIdToken(token)
+    console.log("Token verified - UID:", decoded.uid)
     req.user = decoded
     next()
   } catch (error) {
-    console.error("Auth error:", error.message)
-    res.status(401).json({ error: "Invalid token" })
+    console.error("Auth error:", error.message, error.code)
+    res.status(401).json({ error: "Invalid token", details: error.message })
   }
 }
 
