@@ -159,7 +159,7 @@ app.post("/api/add-coins", requireAuth, async (req, res) => {
 // ================================
 app.post("/api/generate-logo", requireAuth, async (req, res) => {
   try {
-    const { brandName, gameGenre, style, description, colors } = req.body
+    const { brandName, clanName, game, character, style, colors, notes } = req.body
     const userRef = db.collection("users").doc(req.user.uid)
     
     const doc = await userRef.get()
@@ -183,10 +183,12 @@ app.post("/api/generate-logo", requireAuth, async (req, res) => {
       remaining: currentCoins - 5,
       logo: {
         brandName,
-        gameGenre,
+        clanName,
+        game,
+        character,
         style,
-        description,
         colors: colors || ['#ff6b35', '#1a1a2e'],
+        notes,
         url: `https://via.placeholder.com/400x400/${bgColor}/${primaryColor}?text=${encodeURIComponent(brandName)}`,
         createdAt: new Date().toISOString()
       }
