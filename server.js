@@ -2,8 +2,12 @@ import express from "express"
 import cors from "cors"
 import dotenv from "dotenv"
 import admin from "firebase-admin"
+import OpenAI from "openai"
 
 dotenv.config()
+
+// OpenAI Client initialisieren
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -312,6 +316,163 @@ app.post("/api/create-highlights", requireAuth, async (req, res) => {
 })
 
 // ================================
+// GENERATE 3D AVATAR (10 Coins)
+// ================================
+app.post("/api/generate-3d-avatar", requireAuth, async (req, res) => {
+  try {
+    const { logoUrl, brandName, style, colors, game } = req.body
+    const userRef = db.collection("users").doc(req.user.uid)
+
+    const doc = await userRef.get()
+    const currentCoins = doc.data()?.coins || 0
+
+    if (currentCoins < 10) {
+      return res.status(402).json({ error: "Not enough coins", required: 10, current: currentCoins })
+    }
+
+    // Deduct coins
+    await userRef.update({ coins: currentCoins - 10 })
+
+    // Build 3D avatar prompt based on logo data
+    const colorPalette = colors?.length ? colors.join(", ") : "vibrant colors"
+    const gameContext = game || "gaming"
+    const styleContext = style || "esports"
+
+    const avatarPrompt = `Create a stunning 3D character avatar based on this gaming logo: "${brandName}".
+Style: ${styleContext} aesthetic with ${colorPalette} color scheme.
+Game context: ${gameContext}.
+
+The 3D avatar should feature:
+- A fully realized 3D character mascot that embodies the logo's spirit
+- Cinematic lighting with rim lights and volumetric effects
+- High-quality 3D render style, Pixar/Unreal Engine quality
+- Character should be front-facing or 3/4 view, charismatic and expressive
+- Matching the color palette: ${colorPalette}
+- Professional studio lighting, 8k quality, highly detailed
+- Transparent or clean gradient background
+- Character should look like it could be from a premium video game or animated film
+- Expressive face, dynamic pose, gaming/streaming personality
+
+Make it look like a professional 3D game character render that streamers would use as their avatar.`
+
+    let avatarUrl = null
+
+    // Try OpenAI image generation if API key is available
+    if (process.env.OPENAI_API_KEY) {
+      try {
+        const response = await openai.images.generate({
+          model: "dall-e-3",
+          prompt: avatarPrompt,
+          n: 1,
+          size: "1024x1024",
+          quality: "standard"
+        })
+        avatarUrl = response.data[0]?.url
+      } catch (openaiError) {
+        console.error("OpenAI generation failed:", openaiError.message)
+        // Fall back to placeholder
+      }
+    }
+
+    // Fallback to placeholder if OpenAI fails or no API key
+    if (!avatarUrl) {
+      const primaryColor = colors?.[0]?.replace("#", "") || "ff6b35"
+      avatarUrl = `https://via.placeholder.com/1024x1024/1a1a2e/${primaryColor}?text=3D+Avatar:+${encodeURIComponent(brandName)}`
+    }
+
+    res.json({
+      success: true,
+      coinsUsed: 10,
+      remaining: currentCoins - 10,
+      avatar: {
+        brandName,
+        style: styleContext,
+        colors: colors || ["#ff6b35", "#1a1a2e"],
+        game: gameContext,
+        url: avatarUrl,
+        prompt: avatarPrompt,
+        createdAt: new Date().toISOString()
+      }
+    })
+
+  } catch (error) {
+    console.error("Generate 3D avatar error:", error)
+    res.status(500).json({ error: "Failed to generate 3D avatar" })
+  }
+})
+
+// ================================
+// GENERATE VTUBER AVATAR (15 Coins)
+// ================================
+app.post("/api/generate-vtuber", requireAuth, async (req, res) => {
+  try {
+    const { prompt, name, style } = req.body
+    const userRef = db.collection("users").doc(req.user.uid)
+
+    const doc = await userRef.get()
+    const currentCoins = doc.data()?.coins || 0
+
+    if (currentCoins < 15) {
+      return res.status(402).json({ error: "NO_COINS", required: 15, current: currentCoins })
+    }
+
+    // Deduct coins
+    await userRef.update({ coins: currentCoins - 15 })
+
+    let avatarUrl = null
+
+    // Try OpenAI image generation if API key is available
+    if (process.env.OPENAI_API_KEY) {
+      try {
+        const response = await openai.images.generate({
+          model: "dall-e-3",
+          prompt: prompt,
+          n: 1,
+          size: "1024x1024",
+          quality: "standard"
+        })
+        avatarUrl = response.data[0]?.url
+      } catch (openaiError) {
+        console.error("OpenAI generation failed:", openaiError.message)
+        // Fall back to placeholder
+      }
+    }
+
+    // Fallback to placeholder if OpenAI fails or no API key
+    if (!avatarUrl) {
+      const styleColors = {
+        "Anime": "ff6b35",
+        "Realistisch": "8b5cf6",
+        "Chibi": "f472b6",
+        "Cyberpunk": "06b6d4",
+        "Fantasy": "fbbf24",
+        "Sci-Fi": "3b82f6",
+        "Cartoon": "f59e0b"
+      }
+      const color = styleColors[style] || "ff6b35"
+      avatarUrl = `https://via.placeholder.com/1024x1024/1e1e2e/${color}?text=3D+Vtuber:+${encodeURIComponent(name)}`
+    }
+
+    res.json({
+      success: true,
+      coinsUsed: 15,
+      remaining: currentCoins - 15,
+      avatar: {
+        name,
+        style,
+        url: avatarUrl,
+        prompt,
+        createdAt: new Date().toISOString()
+      }
+    })
+
+  } catch (error) {
+    console.error("Generate vtuber error:", error)
+    res.status(500).json({ error: "Failed to generate vtuber avatar" })
+  }
+})
+
+// ================================
 // START
 // ================================
 app.listen(PORT, () => {
@@ -323,4 +484,6 @@ app.listen(PORT, () => {
   console.log(`🎨 Generate Logo: /api/generate-logo (5 Coins)`)
   console.log(`📦 Generate Streampack: /api/generate-streampack (5 Coins/Item)`)
   console.log(`🎬 Create Highlights: /api/create-highlights (15 Coins)`)
+  console.log(`👤 Generate 3D Avatar: /api/generate-3d-avatar (10 Coins)`)
+  console.log(`🎭 Generate Vtuber Avatar: /api/generate-vtuber (15 Coins)`)
 })
