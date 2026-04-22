@@ -624,9 +624,32 @@ app.get("/api/stripe-prices", async (req, res) => {
 })
 
 // ================================
+// ROOT ROUTE
+// ================================
+app.get("/", (req, res) => {
+  res.json({ 
+    status: "ok", 
+    message: "LogoMakerGermany Ultimate Backend",
+    endpoints: [
+      "/api/health",
+      "/api/get-coins",
+      "/api/stripe-prices",
+      "/api/create-checkout-session"
+    ]
+  })
+})
+
+// ================================
+// 404 Handler
+// ================================
+app.use((req, res) => {
+  res.status(404).json({ error: "Route not found", path: req.path })
+})
+
+// ================================
 // START
 // ================================
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`)
   console.log(`📊 Health: /api/health`)
   console.log(`💰 Get Coins: /api/get-coins`)
