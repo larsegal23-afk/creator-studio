@@ -50,12 +50,31 @@ let db = null
 try {
   // Versuche beide Variablennamen
   const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON || process.env.FIREBASE_SERVICE_ACCOUNT
+  
+  if (!serviceAccountJson) {
+    throw new Error("FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_SERVICE_ACCOUNT not set!")
+  }
+  
+  console.log("🔑 Firebase service account found, length:", serviceAccountJson.length)
+  
   const serviceAccount = JSON.parse(serviceAccountJson)
-  admin.initializeApp({ credential: admin.credential.cert(serviceAccount) })
+  console.log("📧 Service account email:", serviceAccount.client_email)
+  console.log("🏷️  Project ID:", serviceAccount.project_id)
+  
+  admin.initializeApp({ 
+    credential: admin.credential.cert(serviceAccount),
+    projectId: serviceAccount.project_id
+  })
+  
   db = admin.firestore()
-  console.log("✅ Firebase connected")
+  console.log("✅ Firebase connected successfully")
 } catch (error) {
-  console.error("❌ Firebase error:", error.message)
+  console.error("❌ Firebase initialization error:", error.message)
+  console.error("🔧 To fix this:")
+  console.error("   1. Go to https://console.firebase.google.com/project/logomakergermany-kreativtool/settings/serviceaccounts/adminsdk")
+  console.error("   2. Click 'Generate new private key'")
+  console.error("   3. Copy the JSON content")
+  console.error("   4. Add to Railway as FIREBASE_SERVICE_ACCOUNT_JSON environment variable")
 }
 
 // ================================
@@ -104,7 +123,17 @@ async function requireAuth(req, res, next) {
 // HEALTH
 // ================================
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", firebase: !!db, time: new Date().toISOString() })
+  const firebaseStatus = {
+    initialized: !!db,
+    serviceAccountSet: !!(process.env.FIREBASE_SERVICE_ACCOUNT_JSON || process.env.FIREBASE_SERVICE_ACCOUNT)
+  }
+  
+  res.json({ 
+    status: "ok", 
+    firebase: firebaseStatus,
+    stripe: !!stripe,
+    time: new Date().toISOString()
+  })
 })
 
 // ================================
