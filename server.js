@@ -11,7 +11,17 @@ dotenv.config()
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
 // Stripe initialisieren
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-12-18.acacia" })
+let stripe = null
+if (process.env.STRIPE_SECRET_KEY) {
+  try {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-12-18.acacia" })
+    console.log("✅ Stripe initialized successfully")
+  } catch (error) {
+    console.error("❌ Failed to initialize Stripe:", error.message)
+  }
+} else {
+  console.error("❌ STRIPE_SECRET_KEY not set! Checkout will not work.")
+}
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -494,30 +504,30 @@ app.post("/api/generate-vtuber", requireAuth, async (req, res) => {
 // ================================
 app.post("/api/create-checkout-session", requireAuth, async (req, res) => {
   try {
+    // Check if Stripe is initialized
+    if (!stripe) {
+      console.error("Stripe not initialized - STRIPE_SECRET_KEY missing")
+      return res.status(500).json({ error: "Payment service not configured. Please contact support." })
+    }
+    
     const { pack } = req.body
     const uid = req.user.uid
 
-    // Paket-Konfiguration mit Stripe Preisen
+    // Paket-Konfiguration mit Originalpreisen aus pricing.html
     const packages = {
-      starter: {
+      coins120: {
         name: "Starter (120 Coins)",
         coins: 120,
         price: 499, // 4,99 € in Cent
         priceId: process.env.STRIPE_PRICE_STARTER || null
       },
-      advanced: {
-        name: "Advanced (300 Coins)",
-        coins: 300,
-        price: 999, // 9,99 € in Cent
-        priceId: process.env.STRIPE_PRICE_ADVANCED || null
-      },
-      professional: {
+      coins700: {
         name: "Professional (700 Coins)",
         coins: 700,
         price: 1999, // 19,99 € in Cent
         priceId: process.env.STRIPE_PRICE_PROFESSIONAL || null
       },
-      enterprise: {
+      coins2000: {
         name: "Enterprise (2000 Coins)",
         coins: 2000,
         price: 4999, // 49,99 € in Cent
@@ -560,8 +570,12 @@ app.post("/api/create-checkout-session", requireAuth, async (req, res) => {
     res.json({ sessionId: session.id, url: session.url })
 
   } catch (error) {
-    console.error("Create checkout session error:", error)
-    res.status(500).json({ error: "Failed to create checkout session" })
+    console.error("Create checkout session error:", error.message)
+    console.error("Full error:", error)
+    res.status(500).json({ 
+      error: "Failed to create checkout session",
+      details: error.message 
+    })
   }
 })
 
@@ -570,12 +584,11 @@ app.post("/api/create-checkout-session", requireAuth, async (req, res) => {
 // ================================
 app.get("/api/stripe-prices", async (req, res) => {
   try {
-    // Statische Preise zurückgeben (aus Stripe oder Fallback)
+    // Statische Preise zurückgeben (Originalpreise aus pricing.html)
     const packages = {
-      starter: { name: "Starter", amount: 499, coins: 120 },
-      advanced: { name: "Advanced", amount: 999, coins: 300 },
-      professional: { name: "Professional", amount: 1999, coins: 700 },
-      enterprise: { name: "Enterprise", amount: 4999, coins: 2000 }
+      coins120: { name: "Starter", amount: 499, coins: 120 },
+      coins700: { name: "Professional", amount: 1999, coins: 700 },
+      coins2000: { name: "Enterprise", amount: 4999, coins: 2000 }
     }
 
     res.json({ packages })

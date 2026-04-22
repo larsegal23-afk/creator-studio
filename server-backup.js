@@ -289,10 +289,10 @@ app.post("/api/create-checkout-session", requireAuth, async (req, res) => {
     
     // Define coin packages
     const packages = {
-      small: { name: "50 Coins", amount: 499, coins: 50 },
-      medium: { name: "150 Coins", amount: 1299, coins: 150 },
-      large: { name: "500 Coins", amount: 3999, coins: 500 }
-    };
+  coins120: { name: "120 Coins", amount: 499, coins: 120 },
+  coins700: { name: "700 Coins", amount: 1999, coins: 700 },
+  coins2000: { name: "2000 Coins", amount: 4999, coins: 2000 }
+};
     
     const selectedPack = packages[pack];
     if (!selectedPack) {
