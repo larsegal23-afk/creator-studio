@@ -38,7 +38,9 @@ app.use(express.json())
 let db = null
 
 try {
-  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON)
+  // Versuche beide Variablennamen
+  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON || process.env.FIREBASE_SERVICE_ACCOUNT
+  const serviceAccount = JSON.parse(serviceAccountJson)
   admin.initializeApp({ credential: admin.credential.cert(serviceAccount) })
   db = admin.firestore()
   console.log("✅ Firebase connected")
@@ -51,29 +53,40 @@ try {
 // ================================
 async function requireAuth(req, res, next) {
   try {
-    console.log("Auth check - Path:", req.path)
-    console.log("Auth header:", req.headers.authorization ? "Present" : "Missing")
+    console.log("🔐 Auth check - Path:", req.path)
     
     const authHeader = req.headers.authorization
     if (!authHeader) {
-      console.log("No auth header")
+      console.log("❌ No auth header")
       return res.status(401).json({ error: "No authorization header" })
     }
 
-    const token = authHeader.split(" ")[1]
-    if (!token) {
-      console.log("No token in header")
-      return res.status(401).json({ error: "No token provided" })
+    const parts = authHeader.split(" ")
+    if (parts.length !== 2 || parts[0] !== "Bearer") {
+      console.log("❌ Invalid auth header format:", authHeader.substring(0, 20))
+      return res.status(401).json({ error: "Invalid authorization format" })
     }
 
-    console.log("Verifying token...")
+    const token = parts[1]
+    if (!token || token.length < 10) {
+      console.log("❌ Token too short or empty")
+      return res.status(401).json({ error: "Invalid token" })
+    }
+
+    console.log("🔍 Verifying token... (length:", token.length, ")")
+    
+    if (!admin.apps.length) {
+      console.log("❌ Firebase not initialized")
+      return res.status(500).json({ error: "Auth service unavailable" })
+    }
+
     const decoded = await admin.auth().verifyIdToken(token)
-    console.log("Token verified - UID:", decoded.uid)
+    console.log("✅ Token verified - UID:", decoded.uid.substring(0, 8), "...")
     req.user = decoded
     next()
   } catch (error) {
-    console.error("Auth error:", error.message, error.code)
-    res.status(401).json({ error: "Invalid token", details: error.message })
+    console.error("❌ Auth error:", error.message, "Code:", error.code)
+    res.status(401).json({ error: "Invalid token", code: error.code, details: error.message })
   }
 }
 
