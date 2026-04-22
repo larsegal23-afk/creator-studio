@@ -26,6 +26,9 @@ if (process.env.STRIPE_SECRET_KEY) {
 const app = express()
 const PORT = process.env.PORT || 3000
 
+// Trust proxy for Railway
+app.set('trust proxy', 1)
+
 // ================================
 // CORS - KOMPLETT OFFEN
 // ================================
