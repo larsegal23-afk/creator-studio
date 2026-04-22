@@ -26,6 +26,10 @@ if (process.env.STRIPE_SECRET_KEY) {
 const app = express()
 const PORT = process.env.PORT || 3000
 
+console.log('🚀 Starting server.js...')
+console.log('📁 Current directory:', process.cwd())
+console.log('🔌 Port:', PORT)
+
 // Trust proxy for Railway
 app.set('trust proxy', 1)
 
@@ -652,6 +656,8 @@ app.use((req, res) => {
 // ================================
 // START
 // ================================
+console.log('📋 Registered routes:', app._router?.stack?.map(l => l.route?.path).filter(Boolean) || 'checking...')
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`)
   console.log(`📊 Health: /api/health`)
