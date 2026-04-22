@@ -3,11 +3,15 @@ import cors from "cors"
 import dotenv from "dotenv"
 import admin from "firebase-admin"
 import OpenAI from "openai"
+import Stripe from "stripe"
 
 dotenv.config()
 
 // OpenAI Client initialisieren
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+
+// Stripe initialisieren
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-12-18.acacia" })
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -473,6 +477,102 @@ app.post("/api/generate-vtuber", requireAuth, async (req, res) => {
 })
 
 // ================================
+// STRIPE CHECKOUT SESSION
+// ================================
+app.post("/api/create-checkout-session", requireAuth, async (req, res) => {
+  try {
+    const { pack } = req.body
+    const uid = req.user.uid
+
+    // Paket-Konfiguration mit Stripe Preisen
+    const packages = {
+      starter: {
+        name: "Starter (120 Coins)",
+        coins: 120,
+        price: 499, // 4,99 € in Cent
+        priceId: process.env.STRIPE_PRICE_STARTER || null
+      },
+      advanced: {
+        name: "Advanced (300 Coins)",
+        coins: 300,
+        price: 999, // 9,99 € in Cent
+        priceId: process.env.STRIPE_PRICE_ADVANCED || null
+      },
+      professional: {
+        name: "Professional (700 Coins)",
+        coins: 700,
+        price: 1999, // 19,99 € in Cent
+        priceId: process.env.STRIPE_PRICE_PROFESSIONAL || null
+      },
+      enterprise: {
+        name: "Enterprise (2000 Coins)",
+        coins: 2000,
+        price: 4999, // 49,99 € in Cent
+        priceId: process.env.STRIPE_PRICE_ENTERPRISE || null
+      }
+    }
+
+    const selectedPackage = packages[pack]
+    if (!selectedPackage) {
+      return res.status(400).json({ error: "Invalid package type" })
+    }
+
+    // Stripe Checkout Session erstellen
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: "eur",
+            product_data: {
+              name: selectedPackage.name,
+              description: `${selectedPackage.coins} Coins für Creator Studio`
+            },
+            unit_amount: selectedPackage.price
+          },
+          quantity: 1
+        }
+      ],
+      mode: "payment",
+      success_url: `${process.env.FRONTEND_URL || "https://logomakergermany-kreativtool.web.app"}/success?session_id={CHECKOUT_SESSION_ID}&pack=${pack}&coins=${selectedPackage.coins}`,
+      cancel_url: `${process.env.FRONTEND_URL || "https://logomakergermany-kreativtool.web.app"}/cancel`,
+      client_reference_id: uid,
+      metadata: {
+        userId: uid,
+        package: pack,
+        coins: selectedPackage.coins.toString()
+      }
+    })
+
+    res.json({ sessionId: session.id, url: session.url })
+
+  } catch (error) {
+    console.error("Create checkout session error:", error)
+    res.status(500).json({ error: "Failed to create checkout session" })
+  }
+})
+
+// ================================
+// STRIPE PRICES API
+// ================================
+app.get("/api/stripe-prices", async (req, res) => {
+  try {
+    // Statische Preise zurückgeben (aus Stripe oder Fallback)
+    const packages = {
+      starter: { name: "Starter", amount: 499, coins: 120 },
+      advanced: { name: "Advanced", amount: 999, coins: 300 },
+      professional: { name: "Professional", amount: 1999, coins: 700 },
+      enterprise: { name: "Enterprise", amount: 4999, coins: 2000 }
+    }
+
+    res.json({ packages })
+  } catch (error) {
+    console.error("Stripe prices error:", error)
+    res.status(500).json({ error: "Failed to fetch prices" })
+  }
+})
+
+// ================================
 // START
 // ================================
 app.listen(PORT, () => {
@@ -486,4 +586,6 @@ app.listen(PORT, () => {
   console.log(`🎬 Create Highlights: /api/create-highlights (15 Coins)`)
   console.log(`👤 Generate 3D Avatar: /api/generate-3d-avatar (10 Coins)`)
   console.log(`🎭 Generate Vtuber Avatar: /api/generate-vtuber (15 Coins)`)
+  console.log(`💳 Stripe Checkout: /api/create-checkout-session`)
+  console.log(`💰 Stripe Prices: /api/stripe-prices`)
 })
