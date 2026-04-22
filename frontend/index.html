@@ -20,12 +20,77 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <!-- Firebase SDK and Initialization -->
- <script type="module" src="js/api-client.js"></script>
-<script type="module" src="js/error-handler.js"></script>
-<script type="module" src="js/tools.js"></script>
-<script type="module" src="js/frontend-fixed.js"></script>
-<script type="module" src="js/router-fixed.js"></script>
-<script type="module" src="js/stripe-prices.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  
+  <!-- Firebase Init & Auth -->
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAzNqEXGDYnyyaxyi_dEkWR8ek3fsoMhFA",
+      authDomain: "logomakergermany-kreativtool.firebaseapp.com",
+      projectId: "logomakergermany-kreativtool"
+    };
+    
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    
+    // Login Function
+    window.login = async function(email, password) {
+      try {
+        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+        const token = await userCredential.user.getIdToken();
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify({
+          uid: userCredential.user.uid,
+          email: userCredential.user.email
+        }));
+        console.log("✅ Login successful");
+        return { success: true, user: userCredential.user };
+      } catch (error) {
+        console.error("❌ Login failed:", error.message);
+        return { success: false, error: error.message };
+      }
+    };
+    
+    // Logout Function
+    window.logout = async function() {
+      try {
+        await firebase.auth().signOut();
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        console.log("✅ Logout successful");
+        window.location.href = "/";
+        return { success: true };
+      } catch (error) {
+        console.error("❌ Logout failed:", error.message);
+        return { success: false, error: error.message };
+      }
+    };
+    
+    // Auth State Listener
+    firebase.auth().onAuthStateChanged(async (user) => {
+      if (user) {
+        // Refresh token
+        const token = await user.getIdToken();
+        localStorage.setItem("token", token);
+        console.log("🔑 Auth state: logged in");
+      } else {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        console.log("🔑 Auth state: logged out");
+      }
+    });
+  </script>
+  
+  <!-- App Scripts -->
+  <script src="js/coins.js"></script>
+  <script type="module" src="js/api-client.js"></script>
+  <script type="module" src="js/error-handler.js"></script>
+  <script type="module" src="js/tools.js"></script>
+  <script type="module" src="js/frontend-fixed.js"></script>
+  <script type="module" src="js/router-fixed.js"></script>
+  <script type="module" src="js/stripe-prices.js"></script>
 </body>
 </html>

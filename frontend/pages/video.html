@@ -1,144 +1,117 @@
 <section class="page-stack">
+  <!-- Hero -->
   <article class="hero-card">
     <div class="hero-copy">
       <p class="hero-kicker">Video Builder</p>
-      <h1>Video-Verarbeitung mit Coins.</h1>
+      <h1>Video Upload und Creator Video Builder.</h1>
       <p>
-        Lade dein Gameplay hoch, erstelle Highlights und exportiere direkt zu TikTok.
+        Lade dein Gameplay hoch, automatische Highlights erkennen, exportiere zu TikTok & Co.
       </p>
     </div>
     <div class="hero-visual"></div>
   </article>
 
+  <!-- Upload Bereich -->
   <article class="card">
     <div class="section-head">
       <div>
-        <h2>Video hochladen</h2>
-        <p class="muted">Lade dein Gameplay-Video hoch und wähle die Verarbeitungsoptionen.</p>
+        <h2>Upload eigenes Video</h2>
+        <p class="muted">MP4, MOV, MKV, AVI - Maximal 5GB</p>
       </div>
     </div>
     
-    <div class="video-upload">
-      <div class="upload-area">
-        <input type="file" id="videoFile" accept="video/*" style="display: none;">
-        <label for="videoFile" class="upload-label">
-          <span class="upload-icon">+ Video hochladen</span>
-        </label>
-      </div>
-      
-      <div id="videoPreview" class="video-preview" style="display: none;">
-        <video id="videoPlayer" controls></video>
-        <div class="video-info">
-          <p><strong>Dateiname:</strong> <span id="fileName">-</span></p>
-          <p><strong>Dauer:</strong> <span id="videoDuration">-</span></p>
-          <p><strong>Kosten:</strong> <span id="videoCost">-</span> Coins</p>
-        </div>
-      </div>
+    <div id="videoUploadArea" class="upload-area" style="border: 2px dashed rgba(255, 107, 53, 0.5); border-radius: 10px; padding: 40px; text-align: center; cursor: pointer;">
+      <input type="file" id="videoFile" accept="video/mp4,video/quicktime,video/x-matroska,video/avi" style="display: none;">
+      <i class="upload-icon" style="font-size: 48px; color: #ff6b35; display: block; margin-bottom: 15px;">+</i>
+      <p>Video hier ablegen oder klicken</p>
+      <p class="muted" style="font-size: 12px; margin-top: 5px;">MP4, MOV, MKV, AVI - Max. 5GB</p>
+    </div>
+    
+    <div id="videoFileInfo" style="display: none; margin-top: 20px;">
+      <!-- Wird von JS gefüllt -->
     </div>
   </article>
 
-  <article class="card">
+  <!-- SECTION: Highlight Detection -->
+  <article id="highlightDetectionSection" class="card" style="display: none;">
     <div class="section-head">
       <div>
-        <h2>Verarbeitungsoptionen</h2>
-        <p class="muted">Wähle was mit deinem Video passieren soll.</p>
+        <h2 style="color: #ff6b35; text-transform: uppercase; font-size: 14px;">SECTION: Highlight Detection</h2>
+        <p class="muted">Wähle die Highlight Types aus</p>
       </div>
     </div>
     
     <div class="processing-options">
+      <p class="muted" style="margin-bottom: 15px;">Highlight Types:</p>
       <div class="option-group">
-        <label>
-          <input type="checkbox" id="createHighlights">
-          Highlights erstellen (10 Coins)
+        <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(45, 45, 68, 0.5); border-radius: 8px; margin-bottom: 10px; cursor: pointer;">
+          <input type="checkbox" id="actionBased" style="width: 18px; height: 18px; accent-color: #ff6b35;">
+          <span>⚡ Action Based</span>
         </label>
-        <label>
-          <input type="checkbox" id="addEffects">
-          Effekte hinzufügen (5 Coins)
+        <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(45, 45, 68, 0.5); border-radius: 8px; margin-bottom: 10px; cursor: pointer;">
+          <input type="checkbox" id="clip" checked style="width: 18px; height: 18px; accent-color: #ff6b35;">
+          <span>🎬 Clip</span>
         </label>
-        <label>
-          <input type="checkbox" id="exportTikTok">
-          Zu TikTok exportieren (5 Coins)
+        <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(45, 45, 68, 0.5); border-radius: 8px; margin-bottom: 10px; cursor: pointer;">
+          <input type="checkbox" id="funnyMoments" style="width: 18px; height: 18px; accent-color: #ff6b35;">
+          <span>😄 Funny Moments</span>
         </label>
-      </div>
-      
-      <div class="total-cost">
-        <strong>Gesamtkosten:</strong> <span id="totalCost">0</span> Coins
+        <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(45, 45, 68, 0.5); border-radius: 8px; margin-bottom: 10px; cursor: pointer;">
+          <input type="checkbox" id="bestAutoAim" style="width: 18px; height: 18px; accent-color: #ff6b35;">
+          <span>🎯 Best Auto Aim</span>
+        </label>
       </div>
     </div>
   </article>
 
-  <article class="card">
+  <!-- SECTION: Video Format -->
+  <article id="videoFormatSection" class="card" style="display: none;">
     <div class="section-head">
       <div>
-        <h2>TikTok Export</h2>
-        <p class="muted">Optimiere dein Video für TikTok.</p>
+        <h2 style="color: #ff6b35; text-transform: uppercase; font-size: 14px;">SECTION: Video Format</h2>
+        <p class="muted">Wähle das Output Format</p>
       </div>
     </div>
     
-    <div class="tiktok-options">
-      <input type="text" id="tiktokTitle" placeholder="TikTok Titel..." maxlength="100">
-      <input type="text" id="tiktokHashtags" placeholder="#gaming #highlights #fyp">
-      
-      <button class="btn primary" onclick="processVideoWithCoins()" id="processBtn">
-        Video verarbeiten
-      </button>
-      
-      <button class="btn secondary" onclick="exportToTikTok()" id="tiktokBtn" style="display: none;">
-        Zu TikTok exportieren
-      </button>
+    <div class="form-group" style="margin-bottom: 20px;">
+      <p class="muted" style="margin-bottom: 10px;">Output Format:</p>
+      <select id="outputFormat" style="width: 100%; padding: 12px; background: #2d2d44; border: 1px solid rgba(255, 107, 53, 0.3); border-radius: 6px; color: white; font-size: 14px;">
+        <option value="">Wähle Format...</option>
+        <option value="tiktok-916">TikTok 9:16</option>
+        <option value="youtube-shorts">YouTube Shorts</option>
+        <option value="tiktok-43">TikTok 4:3</option>
+        <option value="youtube-916">YouTube 9:16</option>
+        <option value="youtube-shorts-2">YouTube Shorts (Alt)</option>
+        <option value="youtube-43">YouTube 4:3</option>
+        <option value="tiktok-highlight">TikTok Highlight</option>
+      </select>
     </div>
+    
+    <!-- Kosten -->
+    <div class="card" style="background: rgba(45, 45, 68, 0.5); margin-bottom: 20px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span class="muted">Kosten:</span>
+        <strong style="color: #ff6b35;">15 Coins</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span class="muted">Verfügbar:</span>
+        <strong id="videoCoinsAvailable" style="color: #10b981;">-</strong>
+      </div>
+    </div>
+    
+    <button id="generateVideoBtn" class="btn primary" type="button" style="width: 100%;">
+      <span class="btn-icon">⚙️</span> Video verarbeiten
+    </button>
   </article>
-</section>
-          <input id="videoFile" type="file" accept=".mp4,.mov,.mkv,video/mp4,video/quicktime,video/x-matroska">
-        </div>
-        <div id="videoFileMeta" class="sheet-result">Noch kein Video ausgewaehlt</div>
 
-        <div class="sheet-row">
-          <label>Projekt / Titelname</label>
-          <input id="videoTitle" type="text" placeholder="Fortnite Highlight Reel">
-        </div>
-
-        <div class="sheet-title">Highlight-Erkennung</div>
-        <div class="sheet-check-grid">
-          <label><input type="checkbox" name="highlightType" value="Headshots"> Headshots</label>
-          <label><input type="checkbox" name="highlightType" value="Kills"> Kills</label>
-          <label><input type="checkbox" name="highlightType" value="Wins"> Wins</label>
-          <label><input type="checkbox" name="highlightType" value="Funny Moments"> Funny Moments</label>
-          <label><input type="checkbox" name="highlightType" value="Loud Audio Peaks"> Loud Audio Peaks</label>
-          <label><input type="checkbox" name="highlightType" value="Fast Movement"> Fast Movement</label>
-        </div>
-
-        <div class="sheet-title">Ausgabeformat</div>
-        <div class="sheet-check-grid">
-          <label><input type="checkbox" name="outputFormat" value="TikTok 9:16"> TikTok 9:16</label>
-          <label><input type="checkbox" name="outputFormat" value="YouTube Shorts"> YouTube Shorts</label>
-          <label><input type="checkbox" name="outputFormat" value="Instagram Reels"> Instagram Reels</label>
-          <label><input type="checkbox" name="outputFormat" value="YouTube 16:9"> YouTube 16:9</label>
-          <label><input type="checkbox" name="outputFormat" value="Twitch Highlight"> Twitch Highlight</label>
-        </div>
-
-        <div class="actions-row">
-          <button id="analyzeVideoBtn" class="btn" type="button">1) Analyse starten</button>
-          <button id="generateVideoBtn" class="btn secondary" type="button">2) Short erstellen</button>
-        </div>
-
-        <article id="detectedHighlightsCard" class="sheet-result">
-          <div class="sheet-title">Erkannte Highlights</div>
-          <div id="detectedHighlightsList" class="empty-state">
-            Noch keine Highlights erkannt. Starte zuerst "Highlights erkennen".
-          </div>
-        </article>
-
-        <article id="videoPlanResult" class="sheet-result">
-          Der Export-Plan erscheint nach der Auswahl.
-        </article>
-      </section>
-
-      <aside class="sheet-preview">
-        <div id="videoPreviewFrame" class="sheet-preview-box">
-          <div class="preview-placeholder">Video-Vorschau</div>
-        </div>
-      </aside>
+  <!-- Ergebnis -->
+  <article id="videoResult" class="card" style="display: none;">
+    <div class="section-head">
+      <div>
+        <h2>Ergebnis</h2>
+        <p class="muted">Highlights und Export</p>
+      </div>
     </div>
+    <!-- Wird von JS gefüllt -->
   </article>
 </section>

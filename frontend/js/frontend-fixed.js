@@ -119,13 +119,14 @@ window.generateLogoFromForm = async function generateLogoFromForm() {
     const brandName = document.getElementById('logoName')?.value?.trim();
     const clanName = document.getElementById('logoClan')?.value?.trim();
     const game = document.getElementById('logoGame')?.value;
+    const character = document.getElementById('logoCharacter')?.value;
     const style = document.getElementById('logoStyle')?.value;
     const notes = document.getElementById('logoNotes')?.value?.trim();
     const colors = Array.from(document.querySelectorAll('input[name="logoColor"]:checked'))
       .map(input => input.value);
 
-    if (!brandName) {
-      window.showToast('Bitte zuerst einen Namen eingeben.', 'error');
+    if (!brandName || !game || !style) {
+      window.showToast('Bitte fülle alle Pflichtfelder aus: Name, Game, Style', 'error');
       return;
     }
 
@@ -154,11 +155,17 @@ window.generateLogoFromForm = async function generateLogoFromForm() {
       }) : 
       `Create a professional esports logo for "${brandName}"`;
 
-    // Call API
+    // Call API with all parameters
     const response = await window.authFetch('/api/generate-logo', {
       method: 'POST',
       body: JSON.stringify({
-        prompt,
+        brandName,
+        clanName,
+        game,
+        character,
+        style,
+        colors,
+        notes,
         requestId: `logo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
       })
     });
@@ -169,14 +176,27 @@ window.generateLogoFromForm = async function generateLogoFromForm() {
 
     const data = await response.json();
     
-    if (data.image) {
+    if (data.success && data.logo) {
+      // Save DNA to localStorage
+      const logoDNA = {
+        brandName,
+        clanName,
+        game,
+        character,
+        style,
+        colors,
+        imageUrl: data.logo.url,
+        createdAt: new Date().toISOString()
+      };
+      localStorage.setItem('logoDNA', JSON.stringify(logoDNA));
+      
       window.CreatorState = window.CreatorState || {};
-      window.CreatorState.logoImage = data.image;
+      window.CreatorState.logoImage = data.logo.url;
       
       // Update preview
       const preview = document.getElementById('logoPreviewFrame');
       if (preview) {
-        preview.innerHTML = `<img src="${data.image}" alt="Logo" style="max-width: 100%; border-radius: 8px;">`;
+        preview.innerHTML = `<img src="${data.logo.url}" alt="Logo" style="max-width: 100%; border-radius: 8px;">`;
       }
 
       // Update result
@@ -337,23 +357,254 @@ window.initVideoPage = function initVideoPage() {
   
   const input = document.getElementById('videoFile');
   const generateButton = document.getElementById('generateVideoBtn');
+  const uploadArea = document.getElementById('videoUploadArea');
 
+  // Handle file input
   if (input) {
     input.addEventListener('change', (event) => {
       const file = event.target.files?.[0];
       if (file) {
-        window.CreatorState = window.CreatorState || {};
-        window.CreatorState.uploadedVideoName = file.name;
-        console.log('Video selected:', file.name);
+        window.handleVideoFile(file);
       }
     });
   }
 
-  if (generateButton) {
-    generateButton.addEventListener('click', () => {
-      window.showToast('Video-Verarbeitung wird vorbereitet...', 'info');
+  // Handle click on upload area
+  if (uploadArea) {
+    uploadArea.addEventListener('click', () => {
+      input?.click();
     });
   }
+
+  if (generateButton) {
+    generateButton.addEventListener('click', window.processVideoWithHighlights);
+  }
+};
+
+window.handleVideoFile = function(file) {
+  if (!file) return;
+  
+  // Validate file type
+  const validTypes = ['video/mp4', 'video/quicktime', 'video/x-matroska', 'video/avi', 'video/x-msvideo'];
+  if (!validTypes.includes(file.type)) {
+    window.showToast('Ungültiges Format. Bitte MP4, MOV, MKV oder AVI verwenden.', 'error');
+    return;
+  }
+  
+  // Validate file size (5GB = 5 * 1024 * 1024 * 1024 bytes)
+  const maxSize = 5 * 1024 * 1024 * 1024;
+  if (file.size > maxSize) {
+    window.showToast('Datei zu groß. Maximal 5GB erlaubt.', 'error');
+    return;
+  }
+  
+  window.CreatorState = window.CreatorState || {};
+  window.CreatorState.uploadedVideo = file;
+  window.CreatorState.uploadedVideoName = file.name;
+  window.CreatorState.uploadedVideoSize = file.size;
+  
+  // Update UI
+  const fileInfo = document.getElementById('videoFileInfo');
+  const highlightSection = document.getElementById('highlightDetectionSection');
+  const formatSection = document.getElementById('videoFormatSection');
+  
+  if (fileInfo) {
+    fileInfo.innerHTML = `
+      <div class="card">
+        <h4>${file.name}</h4>
+        <p class="muted">Größe: ${(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+      </div>
+    `;
+    fileInfo.style.display = 'block';
+  }
+  
+  // Show sections
+  if (highlightSection) highlightSection.style.display = 'block';
+  if (formatSection) formatSection.style.display = 'block';
+  
+  window.showToast('Video erfolgreich hochgeladen!', 'success');
+  
+  // Get video duration
+  const video = document.createElement('video');
+  video.preload = 'metadata';
+  video.onloadedmetadata = function() {
+    window.URL.revokeObjectURL(video.src);
+    const duration = Math.round(video.duration);
+    const minutes = Math.floor(duration / 60);
+    const seconds = duration % 60;
+    window.CreatorState.videoDuration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+    // Update UI with duration
+    if (fileInfo) {
+      fileInfo.innerHTML = `
+        <div class="card">
+          <h4>${file.name}</h4>
+          <p class="muted">Größe: ${(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+          <p class="muted">Dauer: ${window.CreatorState.videoDuration}</p>
+        </div>
+      `;
+    }
+  };
+  video.src = window.URL.createObjectURL(file);
+};
+
+window.processVideoWithHighlights = async function() {
+  try {
+    console.log('Processing video with highlights...');
+    
+    const format = document.getElementById('outputFormat')?.value;
+    const currentCoins = parseInt(localStorage.getItem('localCoins') || '50');
+    
+    if (!window.CreatorState?.uploadedVideo) {
+      window.showToast('Bitte zuerst ein Video hochladen', 'error');
+      return;
+    }
+    
+    if (!format) {
+      window.showToast('Bitte ein Output Format wählen', 'error');
+      return;
+    }
+    
+    // Check coins
+    const coinsResponse = await window.authFetch('/api/use-coins', {
+      method: 'POST',
+      body: JSON.stringify({ amount: 15 })
+    });
+    
+    if (!coinsResponse || !coinsResponse.ok) {
+      window.showToast('Nicht genug Coins! Du brauchst 15 Coins.', 'error');
+      return;
+    }
+    
+    // Get highlight types
+    const highlightTypes = {
+      actionBased: document.getElementById('actionBased')?.checked || false,
+      clip: document.getElementById('clip')?.checked || false,
+      funnyMoments: document.getElementById('funnyMoments')?.checked || false,
+      bestAutoAim: document.getElementById('bestAutoAim')?.checked || false
+    };
+    
+    // Check if at least one is selected
+    if (!Object.values(highlightTypes).some(v => v)) {
+      window.showToast('Bitte mindestens einen Highlight Type auswählen', 'error');
+      return;
+    }
+    
+    // Show loading
+    const result = document.getElementById('videoResult');
+    const button = document.getElementById('generateVideoBtn');
+    
+    if (button) {
+      button.disabled = true;
+      button.innerHTML = '<span class="btn-icon">Loading...</span>Verarbeite Video...';
+    }
+    
+    if (result) {
+      result.innerHTML = '<div class="loader"></div><p class="muted">Video wird verarbeitet...</p>';
+      result.style.display = 'block';
+    }
+    
+    // Call API
+    const response = await window.authFetch('/api/create-highlights', {
+      method: 'POST',
+      body: JSON.stringify({
+        videoName: window.CreatorState.uploadedVideoName,
+        format,
+        highlightTypes
+      })
+    });
+    
+    if (!response || !response.ok) {
+      throw new Error('Video-Verarbeitung fehlgeschlagen');
+    }
+    
+    const data = await response.json();
+    
+    if (data.success && data.highlights) {
+      // Reload coins
+      window.loadCoins();
+      
+      // Update result
+      if (result) {
+        const clips = data.highlights.clips || [];
+        const highlightsHtml = clips.map((clip, i) => `
+          <div class="card" style="margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <strong style="color: #ff6b35;">Highlight ${i + 1}</strong>
+                <p class="muted" style="margin: 0;">${clip.title}</p>
+              </div>
+              <span class="muted">${clip.start} - ${clip.end}</span>
+            </div>
+          </div>
+        `).join('');
+        
+        result.innerHTML = `
+          <div class="card" style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981;">
+            <h4 style="color: #10b981;"><span style="margin-right: 8px;">✓</span>Video erfolgreich verarbeitet!</h4>
+            <p class="muted">${clips.length} Highlights gefunden</p>
+            <p class="muted">Format: ${format}</p>
+            <p class="muted">15 Coins wurden abgezogen</p>
+          </div>
+          
+          <h4 style="margin-top: 20px;">GEFUNDENE HIGHLIGHTS:</h4>
+          ${highlightsHtml || '<p class="muted">Keine Highlights gefunden</p>'}
+          
+          <div class="action-buttons" style="margin-top: 20px;">
+            <button class="btn primary" onclick="window.downloadVideoResult()">
+              <span class="btn-icon">Download</span>Video herunterladen
+            </button>
+            <button class="btn secondary" onclick="window.resetVideoPage()">
+              <span class="btn-icon">Reset</span>Neues Video
+            </button>
+          </div>
+        `;
+      }
+      
+      window.showToast('Video erfolgreich verarbeitet!', 'success');
+    }
+    
+  } catch (error) {
+    console.error('Video processing failed:', error);
+    window.showToast('Video-Verarbeitung fehlgeschlagen', 'error');
+    
+    const result = document.getElementById('videoResult');
+    if (result) {
+      result.innerHTML = '<p class="muted">Fehler bei der Verarbeitung. Bitte versuche es erneut.</p>';
+    }
+  } finally {
+    const button = document.getElementById('generateVideoBtn');
+    if (button) {
+      button.disabled = false;
+      button.innerHTML = '<span class="btn-icon">Create</span>Video verarbeiten (15 Coins)';
+    }
+  }
+};
+
+window.downloadVideoResult = function() {
+  window.showToast('Download wird vorbereitet...', 'info');
+};
+
+window.resetVideoPage = function() {
+  window.CreatorState = window.CreatorState || {};
+  delete window.CreatorState.uploadedVideo;
+  delete window.CreatorState.uploadedVideoName;
+  delete window.CreatorState.uploadedVideoSize;
+  delete window.CreatorState.videoDuration;
+  
+  const fileInfo = document.getElementById('videoFileInfo');
+  const highlightSection = document.getElementById('highlightDetectionSection');
+  const formatSection = document.getElementById('videoFormatSection');
+  const result = document.getElementById('videoResult');
+  const input = document.getElementById('videoFile');
+  
+  if (fileInfo) fileInfo.style.display = 'none';
+  if (highlightSection) highlightSection.style.display = 'none';
+  if (formatSection) formatSection.style.display = 'none';
+  if (result) result.style.display = 'none';
+  if (input) input.value = '';
+  
+  window.showToast('Bereit für neues Video', 'info');
 };
 
 // Fix 7: Utility functions

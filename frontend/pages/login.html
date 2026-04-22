@@ -64,3 +64,132 @@
     <p id="loginHint" class="muted">Bitte mit deinem Konto anmelden.</p>
   </article>
 </section>
+
+<script>
+(function() {
+  // Tab Switching
+  const loginTab = document.getElementById('loginTab');
+  const registerTab = document.getElementById('registerTab');
+  const loginForm = document.getElementById('loginForm');
+  const registerForm = document.getElementById('registerForm');
+  const formTitle = document.getElementById('formTitle');
+  const formSubtitle = document.getElementById('formSubtitle');
+  const loginHint = document.getElementById('loginHint');
+
+  loginTab?.addEventListener('click', () => {
+    loginTab.classList.add('active');
+    registerTab?.classList.remove('active');
+    loginForm?.classList.remove('hidden');
+    registerForm?.classList.add('hidden');
+    if (formTitle) formTitle.textContent = 'Login';
+    if (formSubtitle) formSubtitle.textContent = 'Sicher ueber Firebase.';
+    if (loginHint) loginHint.textContent = 'Bitte mit deinem Konto anmelden.';
+  });
+
+  registerTab?.addEventListener('click', () => {
+    registerTab?.classList.add('active');
+    loginTab?.classList.remove('active');
+    registerForm?.classList.remove('hidden');
+    loginForm?.classList.add('hidden');
+    if (formTitle) formTitle.textContent = 'Registrieren';
+    if (formSubtitle) formSubtitle.textContent = 'Neues Konto erstellen.';
+    if (loginHint) loginHint.textContent = 'Erstelle ein neues Konto.';
+  });
+
+  // Login Handler
+  loginForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById('email')?.value.trim();
+    const password = document.getElementById('password')?.value;
+    const loginBtn = document.getElementById('loginBtn');
+    
+    if (!email || !password) {
+      if (loginHint) loginHint.textContent = 'Bitte Email und Passwort eingeben.';
+      return;
+    }
+
+    if (loginBtn) {
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Wird eingeloggt...';
+    }
+
+    try {
+      const result = await window.login(email, password);
+      
+      if (result.success) {
+        if (loginHint) loginHint.textContent = 'Login erfolgreich! Weiterleitung...';
+        setTimeout(() => {
+          window.location.href = '#/dashboard';
+        }, 1000);
+      } else {
+        if (loginHint) loginHint.textContent = 'Login fehlgeschlagen: ' + result.error;
+        if (loginBtn) {
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Login';
+        }
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      if (loginHint) loginHint.textContent = 'Ein Fehler ist aufgetreten. Bitte erneut versuchen.';
+      if (loginBtn) {
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Login';
+      }
+    }
+  });
+
+  // Register Handler
+  registerForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById('regEmail')?.value.trim();
+    const password = document.getElementById('regPassword')?.value;
+    const passwordConfirm = document.getElementById('regPasswordConfirm')?.value;
+    const registerBtn = document.getElementById('registerBtn');
+    
+    if (!email || !password) {
+      if (loginHint) loginHint.textContent = 'Bitte alle Felder ausfuellen.';
+      return;
+    }
+    
+    if (password !== passwordConfirm) {
+      if (loginHint) loginHint.textContent = 'Passwoerter stimmen nicht ueberein.';
+      return;
+    }
+    
+    if (password.length < 6) {
+      if (loginHint) loginHint.textContent = 'Passwort muss mindestens 6 Zeichen haben.';
+      return;
+    }
+
+    if (registerBtn) {
+      registerBtn.disabled = true;
+      registerBtn.textContent = 'Wird erstellt...';
+    }
+
+    try {
+      // Create user with Firebase
+      const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+      const token = await userCredential.user.getIdToken();
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify({
+        uid: userCredential.user.uid,
+        email: userCredential.user.email
+      }));
+      
+      if (loginHint) loginHint.textContent = 'Konto erstellt! Weiterleitung...';
+      setTimeout(() => {
+        window.location.href = '#/dashboard';
+      }, 1000);
+    } catch (error) {
+      console.error('Register error:', error);
+      if (loginHint) loginHint.textContent = 'Registrierung fehlgeschlagen: ' + error.message;
+      if (registerBtn) {
+        registerBtn.disabled = false;
+        registerBtn.textContent = 'Konto erstellen';
+      }
+    }
+  });
+})();
+</script>
