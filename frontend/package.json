@@ -4,12 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "npx serve . -l 5500",
-    "build": "echo 'Build complete - static files ready'",
-    "start": "npm run dev"
+    "dev": "serve . -l 5500",
+    "start": "serve . -l 5500",
+    "build": "echo 'Static frontend ready'"
   },
   "devDependencies": {
     "serve": "^14.2.1"
-  },
-  "dependencies": {}
+  }
 }

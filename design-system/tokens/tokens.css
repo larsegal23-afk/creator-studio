@@ -1,0 +1,20 @@
+/* Design Tokens */
+
+:root {
+  --bg: #030308;
+  --panel: #0f0f1c;
+  --panel2: #0b0b14;
+
+  --primary: #7c3aed;
+  --primary-hover: #6d28d9;
+
+  --text: #ffffff;
+  --text2: #a1a1aa;
+
+  --radius: 12px;
+  --space: 20px;
+
+  --border: rgba(255, 255, 255, 0.08);
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  --transition: 0.2s ease;
+}

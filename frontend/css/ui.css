@@ -55,6 +55,10 @@ button {
   display: grid;
   grid-template-columns: 290px 1fr;
   min-height: 100vh;
+<<<<<<< HEAD
+=======
+  -webkit-backdrop-filter: blur(4px);
+>>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
   backdrop-filter: blur(4px);
 }
 
@@ -193,6 +197,10 @@ button {
   padding: 18px 28px;
   border-bottom: 1px solid var(--border);
   background: rgba(7, 11, 21, 0.82);
+<<<<<<< HEAD
+=======
+  -webkit-backdrop-filter: blur(18px);
+>>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
   backdrop-filter: blur(18px);
 }
 
@@ -483,6 +491,7 @@ button:hover {
   min-height: 100%;
 }
 
+<<<<<<< HEAD
 .dna-preview {
   display: grid;
   min-height: 320px;
@@ -496,6 +505,8 @@ button:hover {
     url("../assets/system-background.png") center/cover;
 }
 
+=======
+>>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
 .preview-frame {
   display: grid;
   place-items: center;
@@ -671,7 +682,11 @@ button:hover {
 
   .sidebar {
     position: relative;
+<<<<<<< HEAD
     min-height: auto;
+=======
+    min-height: unset;
+>>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
   }
 
   .hero-card,
@@ -680,6 +695,7 @@ button:hover {
   }
 }
 
+<<<<<<< HEAD
 .sheet-page {
   display: grid;
   gap: 14px;
@@ -847,6 +863,8 @@ button:hover {
   }
 }
 
+=======
+>>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
 @media (max-width: 720px) {
   .content,
   .topbar {

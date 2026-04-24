@@ -1,15 +1,18 @@
 {
-  "extends": [
-    "development"
-  ],
+  "extends": ["web-recommended"],
   "hints": {
     "compat-api/css": [
-      "default",
+      "warning",
       {
-        "ignore": [
-          "user-select"
-        ]
+        "ignore": ["user-select"]
       }
-    ]
+    ],
+    "no-inline-styles": "warning",
+    "https-only": "error",
+    "strict-transport-security": "error",
+    "content-security-policy": "warning",
+    "x-content-type-options": "error",
+    "x-frame-options": "error",
+    "no-vulnerable-javascript-libraries": "error"
   }
 }

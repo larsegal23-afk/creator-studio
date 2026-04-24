@@ -1,0 +1,106 @@
+<section class="page-stack">
+  <article class="card">
+    <div class="section-head">
+      <div>
+        <h2>Branding Studio</h2>
+        <p class="muted">Felder fuer Name, Clan/Agent, Spiel, Stil und Mehrfachfarben wie in deiner Vorlage.</p>
+      </div>
+    </div>
+
+    <div class="builder-grid">
+      <div class="page-stack">
+        <div class="form-grid">
+          <div class="field">
+            <label for="logoName">Name</label>
+            <input id="logoName" class="input" type="text" placeholder="Mein Logo oder Markenname">
+          </div>
+
+          <div class="field">
+            <label for="logoClan">Clan / Agentur Name</label>
+            <input id="logoClan" class="input" type="text" placeholder="Passender Zusatzname">
+          </div>
+
+          <div class="field">
+            <label for="logoGame">Game</label>
+            <select id="logoGame">
+              <option value="">Bitte auswaehlen</option>
+              <option>Fortnite</option>
+              <option>Call of Duty</option>
+              <option>League of Legends</option>
+              <option>Valorant</option>
+              <option>Minecraft</option>
+              <option>Free Fire</option>
+              <option>Roblox</option>
+              <option>World of Warcraft</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="logoStyle">Style</label>
+            <select id="logoStyle">
+              <option value="">Bitte auswaehlen</option>
+              <option>Manga / Anime</option>
+              <option>Esports Aggressive</option>
+              <option>Luxury Minimal</option>
+              <option>Fabel / Fantasy</option>
+              <option>Cyber Tech</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Farben mit Mehrfachauswahl</label>
+          <div class="option-grid">
+            <label class="selection-card"><input type="checkbox" name="logoColor" value="Orange"><span><strong>Orange</strong><span>Warm und energisch</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="logoColor" value="Blau"><span><strong>Blau</strong><span>Klar und technisch</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="logoColor" value="Rot"><span><strong>Rot</strong><span>Hart und dominant</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="logoColor" value="Gruen"><span><strong>Gruen</strong><span>Frisch und auffaellig</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="logoColor" value="Lila"><span><strong>Lila</strong><span>Epic und fantasy</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="logoColor" value="Gold"><span><strong>Gold</strong><span>Premium und royal</span></span></label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="logoUpload">Eigenes Logo oder Selfie hochladen</label>
+          <input id="logoUpload" type="file" accept="image/*">
+        </div>
+
+        <div class="field">
+          <label for="logoNotes">Zusatznotizen</label>
+          <textarea id="logoNotes" placeholder="Zum Beispiel Maskottchen, Tiere, Fantasy-Wesen oder besondere Stilregeln."></textarea>
+        </div>
+
+        <div class="actions-row">
+          <button id="generateLogoBtn" class="btn" type="button">Generate Logo + Save DNA</button>
+          <button id="reuseDnaBtn" class="btn secondary" type="button">Letzte DNA laden</button>
+        </div>
+      </div>
+
+      <aside class="preview-pane">
+        <div class="section-head">
+          <div>
+            <h3>Logo Fenster</h3>
+            <p class="muted">Hier erscheint das hochgeladene oder generierte Ergebnis.</p>
+          </div>
+        </div>
+        <div id="logoPreviewFrame" class="preview-frame">
+          <div class="preview-placeholder">
+            Gib links deine Daten ein und generiere dann das Logo. Das Backend liefert das Bild direkt in dieses Fenster.
+          </div>
+        </div>
+      </aside>
+    </div>
+  </article>
+
+  <article id="logoResult"></article>
+
+  <article class="card">
+    <div class="section-head">
+      <div>
+        <h2>Brand-DNA Bibliothek</h2>
+        <p class="muted">Gespeicherte Stilbausteine fuer weitere Logos oder spaetere Streampacks.</p>
+      </div>
+    </div>
+    <div id="dnaLibrary" class="preview-grid"></div>
+  </article>
+</section>

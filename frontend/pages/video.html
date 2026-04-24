@@ -1,4 +1,5 @@
 <section class="page-stack">
+<<<<<<< HEAD
   <!-- Hero -->
   <article class="hero-card">
     <div class="hero-copy">
@@ -113,5 +114,77 @@
       </div>
     </div>
     <!-- Wird von JS gefüllt -->
+=======
+  <article class="card">
+    <div class="section-head">
+      <div>
+        <h2>Video Upload und Creator Video Builder</h2>
+        <p class="muted">MP4, MOV und MKV Upload mit Highlight Detection und Ausgabeformaten.</p>
+      </div>
+    </div>
+
+    <div class="builder-grid">
+      <div class="page-stack">
+        <div class="upload-zone">
+          <div>
+            <h3>Gameplay Video hochladen</h3>
+            <p class="muted">Maximal aktuell als Planungsmodul hinterlegt. Uploadformate: MP4, MOV, MKV.</p>
+            <input id="videoFile" type="file" accept=".mp4,.mov,.mkv,video/mp4,video/quicktime,video/x-matroska" title="Video file upload">
+            <p id="videoFileMeta" class="muted">Noch kein Video ausgewaehlt</p>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="videoTitle">Projekt- oder Titelname</label>
+          <input id="videoTitle" class="input" type="text" placeholder="Zum Beispiel Fortnite Highlight Reel">
+        </div>
+
+        <div class="field">
+          <label>Highlight Detection</label>
+          <div class="option-grid">
+            <label class="selection-card"><input type="checkbox" name="highlightType" value="Action Scenes"><span><strong>Action Scenes</strong><span>Schnelle Kampfszenen</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="highlightType" value="Kills"><span><strong>Kills</strong><span>Frags und Eliminations</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="highlightType" value="Wins"><span><strong>Wins</strong><span>Victory und Endmomente</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="highlightType" value="Funny Moments"><span><strong>Funny Moments</strong><span>Memes und Fail Clips</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="highlightType" value="Loud Audio Peaks"><span><strong>Loud Audio Peaks</strong><span>Lautstaerke-Events</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="highlightType" value="Fast Movement"><span><strong>Fast Movement</strong><span>Movement und Rush</span></span></label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Video Format</label>
+          <div class="option-grid">
+            <label class="selection-card"><input type="checkbox" name="outputFormat" value="TikTok 9:16"><span><strong>TikTok 9:16</strong><span>Shortform vertikal</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="outputFormat" value="YouTube Shorts"><span><strong>YouTube Shorts</strong><span>Mobile Shorts</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="outputFormat" value="Instagram Reels"><span><strong>Instagram Reels</strong><span>Creator Social Clip</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="outputFormat" value="YouTube 16:9"><span><strong>YouTube 16:9</strong><span>Landscape Edit</span></span></label>
+            <label class="selection-card"><input type="checkbox" name="outputFormat" value="Twitch Highlight"><span><strong>Twitch Highlight</strong><span>Replay und Highlight Roll</span></span></label>
+          </div>
+        </div>
+
+        <div class="actions-row">
+          <button id="generateVideoBtn" class="btn" type="button">Builder Plan erzeugen</button>
+        </div>
+      </div>
+
+      <aside class="preview-pane">
+        <div class="section-head">
+          <div>
+            <h3>Thumbnail / Mini Player</h3>
+            <p class="muted">Vorschauzone fuer den spaeteren Video-Workflow.</p>
+          </div>
+        </div>
+        <div class="preview-frame">
+          <div class="preview-placeholder">
+            Nach der Dateiauswahl wird hier der Builder-Status und die naechste Produktionsstufe vorbereitet.
+          </div>
+        </div>
+      </aside>
+    </div>
+  </article>
+
+  <article id="videoPlanResult" class="card">
+    <div class="empty-state">Nach dem Upload und der Auswahl der Formate erscheint hier dein Builder-Plan.</div>
+>>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
   </article>
 </section>

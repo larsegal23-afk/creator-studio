@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "name": "creatorstudio-fullstack",
   "version": "1.0.0",
   "description": "Creator Studio - LogoMakerGermany Branding Studio",
@@ -23,5 +24,27 @@
   "license": "UNLICENSED",
   "engines": {
     "node": ">=16.0.0"
+=======
+  "name": "creatorstudio-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "*",
+    "dotenv": "*",
+    "express": "*",
+    "express-rate-limit": "*",
+    "ffmpeg-static": "*",
+    "ffprobe-static": "*",
+    "firebase-admin": "*",
+    "multer": "*",
+    "openai": "*",
+    "stripe": "*",
+    "tesseract.js": "^7.0.0"
+>>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
   }
 }

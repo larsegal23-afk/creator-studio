@@ -1,0 +1,65 @@
+<section class="page-stack">
+  <article class="hero-card">
+    <div class="hero-copy">
+      <p class="hero-kicker">Studio Cockpit</p>
+      <h1>Stream Branding Studio</h1>
+      <p>
+       
+      </p>
+      <div class="hero-actions">
+        <button class="btn" type="button" onclick="loadPage('logo')">Logo starten</button>
+        <button class="btn secondary" type="button" onclick="loadPage('video')">Video Builder</button>
+        <button class="btn secondary" type="button" onclick="loadPage('stream')">Stream Pack</button>
+      </div>
+    </div>
+    <div class="hero-visual"></div>
+  </article>
+
+  <section class="stats-grid">
+    <article class="stat-card">
+      <p class="muted">Coins</p>
+      <strong id="coinsValue" class="stat-value">-</strong>
+    </article>
+    <article class="stat-card">
+      <p class="muted">Lokale Projekte</p>
+      <strong id="projectsValue" class="stat-value">0</strong>
+    </article>
+   
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <div class="section-head">
+        <div>
+          <h2>Coins aufladen</h2>
+          <p class="muted">Direkter Stripe-Checkout ueber das Backend.</p>
+        </div>
+      </div>
+      <div class="actions-row">
+        <button class="btn" type="button" onclick="buyCoins('small')">100 Coins</button>
+        <button class="btn secondary" type="button" onclick="buyCoins('medium')">300 Coins</button>
+        <button class="btn secondary" type="button" onclick="buyCoins('large')">700 Coins</button>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="section-head">
+        <div>
+          <h2>Projekt-Übersicht</h2>
+          <p class="muted">Zuletzt erzeugte Builder-Karten und lokale Entwuerfe.</p>
+        </div>
+      </div>
+      <div id="projectOverview" class="tool-grid"></div>
+    </article>
+  </section>
+
+  <article class="card">
+    <div class="section-head">
+      <div>
+        <h2>Letzte Aktivitaeten</h2>
+        <p class="muted">Direkt aus dem deployten Backend geladen.</p>
+      </div>
+    </div>
+    <div id="activityFeed" class="grid"></div>
+  </article>
+</section>
