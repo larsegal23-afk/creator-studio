@@ -50,8 +50,8 @@ class CoinsManager {
       
       const packages = {
         starter: { name: 'Starter', coins: 50, price: '4,99€' },
-        professional: { name: 'Professional', coins: 150, price: '12,99€' },
-        enterprise: { name: 'Enterprise', coins: 500, price: '39,99€' }
+        pro: { name: 'Professional', coins: 150, price: '12,99€' },
+        ultimate: { name: 'Enterprise', coins: 500, price: '39,99€' }
       };
 
       const selectedPackage = packages[packageType];
@@ -68,8 +68,13 @@ class CoinsManager {
         body: JSON.stringify({ pack: packageType })
       });
 
-      if (!response || !response.ok) {
-        throw new Error('Failed to create checkout session');
+      if (!response) {
+        throw new Error('Network error - no response');
+      }
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || errorData.error || `Server error: ${response.status}`);
       }
 
       const session = await response.json();
@@ -83,7 +88,7 @@ class CoinsManager {
 
     } catch (error) {
       console.error('Coin purchase failed:', error);
-      window.showToast('Kauf fehlgeschlagen. Bitte erneut versuchen.', 'error');
+      window.showToast(`Kauf fehlgeschlagen: ${error.message}`, 'error');
     }
   }
 
@@ -112,8 +117,8 @@ class CoinsManager {
       const packageType = button.dataset.coinsPurchase;
       const packages = {
         starter: { coins: 50 },
-        professional: { coins: 150 },
-        enterprise: { coins: 500 }
+        pro: { coins: 150 },
+        ultimate: { coins: 500 }
       };
 
       const packageInfo = packages[packageType];

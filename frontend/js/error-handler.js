@@ -4,7 +4,7 @@ window.ErrorHandler = {
     console.error(`[Error${context ? ` - ${context}` : ''}]`, error);
     
     // Send to error tracking service in production
-    if (window.APP_CONFIG.apiBase.includes('railway.app')) {
+    if (window.APP_CONFIG?.apiBase?.includes('railway.app')) {
       this.reportError(error, context);
     }
   },

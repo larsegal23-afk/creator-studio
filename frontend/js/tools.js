@@ -1,16 +1,11 @@
-window.APP_CONFIG = {
-  apiBase: "https://logomakergermany-ultimate-backend-production.up.railway.app"
-};
-
 window.CreatorState = {
   logoImage: "",
   uploadedLogo: "",
-<<<<<<< HEAD
   uploadedVideoName: "",
-  uploadedVideoToken: ""
-=======
-  uploadedVideoName: ""
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
+  uploadedVideoFile: null,
+  uploadedVideoToken: "",
+  detectedHighlights: [],
+  selectedHighlightIds: []
 };
 
 window.escapeHtml = function escapeHtml(value) {
@@ -65,10 +60,7 @@ function addBrandDna(entry) {
 
 window.showToast = function showToast(message, type = "success") {
   const toast = document.getElementById("toast");
-
-  if (!toast) {
-    return;
-  }
+  if (!toast) return;
 
   toast.textContent = message;
   toast.className = `toast visible${type === "error" ? " error" : ""}`;
@@ -81,13 +73,13 @@ window.showToast = function showToast(message, type = "success") {
 
 window.getAuthToken = async function getAuthToken(forceRefresh = false) {
   try {
-    if (window.firebaseAuthApi?.getToken) {
-      return await window.firebaseAuthApi.getToken(forceRefresh);
+    const user = firebase.auth().currentUser;
+    if (user) {
+      return await user.getIdToken(forceRefresh);
     }
   } catch (error) {
     console.log("Token refresh failed", error);
   }
-
   return localStorage.getItem("token");
 };
 
@@ -95,7 +87,7 @@ window.authFetch = async function authFetch(path, options = {}) {
   const token = await window.getAuthToken();
 
   if (!token) {
-    window.handleLoggedOutState?.();
+    window.showToast("Nicht eingeloggt", "error");
     return null;
   }
 
@@ -122,60 +114,19 @@ window.authFetch = async function authFetch(path, options = {}) {
     return response;
   } catch (error) {
     console.log("API request failed", error);
-<<<<<<< HEAD
     window.showToast("Netzwerkfehler. Bitte erneut versuchen.", "error");
-=======
-    window.showToast("Netzwerkfehler beim Verbinden mit dem Backend.", "error");
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
     return null;
   }
 };
 
-<<<<<<< HEAD
-window.consumeCoins = async function consumeCoins(amount = 1) {
-  const response = await window.authFetch("https://logomakergermany-ultimate-backend-production.up.railway.app/api/use-coins", {
-    method: "POST",
-    body: JSON.stringify({ amount })
-  });
-
-  if (!response) {
-    return { ok: false, reason: "NETWORK", message: "Coin-Pruefung fehlgeschlagen." };
-  }
-
-  const payload = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    const isNoCoins = payload?.error === "NO_COINS"
-      || payload?.code === "NO_COINS"
-      || response.status === 402;
-
-    if (isNoCoins) {
-      return { ok: false, reason: "NO_COINS", message: "Nicht genug Coins." };
-    }
-
-    return {
-      ok: false,
-      reason: "FAILED",
-      message: payload?.message || payload?.error || "Coin-Abbuchung fehlgeschlagen."
-    };
-  }
-
-  return { ok: true, payload };
-};
-
-=======
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
 window.logout = async function logout() {
   try {
-    if (window.firebaseAuthApi?.logout) {
-      await window.firebaseAuthApi.logout();
-    }
+    await firebase.auth().signOut();
   } catch (error) {
-    console.log("Logout fallback", error);
+    console.log("Logout error", error);
   }
-
   localStorage.removeItem("token");
-  window.handleLoggedOutState?.();
+  window.location.href = "/";
 };
 
 window.readFileAsDataUrl = function readFileAsDataUrl(file) {
@@ -195,9 +146,7 @@ window.initLogoPage = function initLogoPage() {
   if (uploadInput) {
     uploadInput.addEventListener("change", async (event) => {
       const file = event.target.files?.[0];
-      if (!file) {
-        return;
-      }
+      if (!file) return;
 
       window.CreatorState.uploadedLogo = await window.readFileAsDataUrl(file);
       const frame = document.getElementById("logoPreviewFrame");
@@ -211,20 +160,11 @@ window.initLogoPage = function initLogoPage() {
   reuseButton?.addEventListener("click", () => {
     const entries = getBrandDna();
     if (!entries.length) {
-<<<<<<< HEAD
       window.showToast("Keine gespeicherte DNA gefunden.", "error");
-=======
-      window.showToast("Noch keine gespeicherte DNA vorhanden.", "error");
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
       return;
     }
-
     window.fillLogoForm(entries[0]);
-<<<<<<< HEAD
     window.showToast("DNA geladen.");
-=======
-    window.showToast("Letzte Brand-DNA wurde in das Formular geladen.");
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
   });
 
   window.renderBrandDna();
@@ -242,21 +182,7 @@ window.fillLogoForm = function fillLogoForm(entry) {
   Object.entries(mapping).forEach(([id, value]) => {
     const element = document.getElementById(id);
     if (element) {
-<<<<<<< HEAD
-      const nextValue = value || "";
-      if (element.tagName === "SELECT" && nextValue) {
-        const hasOption = Array.from(element.options || []).some((option) => option.value === nextValue || option.text === nextValue);
-        if (!hasOption) {
-          const fallbackOption = document.createElement("option");
-          fallbackOption.value = nextValue;
-          fallbackOption.textContent = nextValue;
-          element.appendChild(fallbackOption);
-        }
-      }
-      element.value = nextValue;
-=======
       element.value = value || "";
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
     }
   });
 
@@ -268,21 +194,14 @@ window.fillLogoForm = function fillLogoForm(entry) {
 
 window.renderBrandDna = function renderBrandDna() {
   const container = document.getElementById("dnaLibrary");
-
-  if (!container) {
-    return;
-  }
+  if (!container) return;
 
   const entries = getBrandDna();
 
   if (!entries.length) {
     container.innerHTML = `
       <div class="empty-state">
-<<<<<<< HEAD
         Noch keine DNA gespeichert.
-=======
-        Noch keine Brand-DNA gespeichert. Generiere dein erstes Logo und wir merken uns Stil, Spiel und Farben.
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
       </div>
     `;
     return;
@@ -292,13 +211,8 @@ window.renderBrandDna = function renderBrandDna() {
     <article class="dna-item">
       <div class="section-head">
         <div>
-<<<<<<< HEAD
           <h3>${window.escapeHtml(entry.brandName || "Unbenannt")}</h3>
           <p class="muted">${window.escapeHtml(entry.game || "Game")} - ${window.escapeHtml(entry.style || "Style")}</p>
-=======
-          <h3>${window.escapeHtml(entry.brandName || "Unbenanntes Projekt")}</h3>
-          <p class="muted">${window.escapeHtml(entry.game || "Game offen")} - ${window.escapeHtml(entry.style || "Style offen")}</p>
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
         </div>
         <button class="btn secondary" type="button" onclick="useBrandDna(${index})">Verwenden</button>
       </div>
@@ -311,16 +225,9 @@ window.renderBrandDna = function renderBrandDna() {
 
 window.useBrandDna = function useBrandDna(index) {
   const entries = getBrandDna();
-  if (!entries[index]) {
-    return;
-  }
-
+  if (!entries[index]) return;
   window.fillLogoForm(entries[index]);
-<<<<<<< HEAD
   window.showToast("DNA uebernommen.");
-=======
-  window.showToast("Brand-DNA in das Formular uebernommen.");
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
 };
 
 window.generateLogoFromForm = async function generateLogoFromForm() {
@@ -332,11 +239,7 @@ window.generateLogoFromForm = async function generateLogoFromForm() {
   const colors = Array.from(document.querySelectorAll('input[name="logoColor"]:checked')).map((input) => input.value);
 
   if (!brandName) {
-<<<<<<< HEAD
     window.showToast("Bitte zuerst einen Namen eingeben.", "error");
-=======
-    window.showToast("Bitte gib zuerst einen Namen fuer das Branding an.", "error");
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
     return;
   }
 
@@ -346,18 +249,13 @@ window.generateLogoFromForm = async function generateLogoFromForm() {
 
   if (button) {
     button.disabled = true;
-<<<<<<< HEAD
     button.textContent = "Erstelle...";
-=======
-    button.textContent = "Generiere...";
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
   }
 
   if (result) {
     result.innerHTML = `<div class="loader"></div>`;
   }
 
-<<<<<<< HEAD
   const prompt = window.buildMagicPrompt({
     name: brandName,
     clan: clanName,
@@ -367,48 +265,24 @@ window.generateLogoFromForm = async function generateLogoFromForm() {
     notes
   });
 
-  const response = await window.authFetch("https://logomakergermany-ultimate-backend-production.up.railway.app/api/generate-logo", {
+  const response = await window.authFetch("/api/generate-logo", {
     method: "POST",
     body: JSON.stringify({
       prompt,
       requestId: `logo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     })
-=======
-  const promptParts = [
-    `Create a premium esports logo for "${brandName}".`,
-    clanName ? `Clan or agent name: ${clanName}.` : "",
-    game ? `Game universe: ${game}.` : "",
-    style ? `Visual style: ${style}.` : "",
-    colors.length ? `Preferred colors: ${colors.join(", ")}.` : "",
-    notes ? `Extra instructions: ${notes}.` : "",
-    "High contrast, transparent-friendly composition, centered emblem, bold icon, clean text treatment."
-  ].filter(Boolean);
-
-  const response = await window.authFetch("/api/generate-logo", {
-    method: "POST",
-    body: JSON.stringify({ prompt: promptParts.join(" ") })
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
   });
 
   if (button) {
     button.disabled = false;
-<<<<<<< HEAD
     button.textContent = "Logo erstellen";
-=======
-    button.textContent = "Generate Logo + Save DNA";
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
   }
 
   if (!response || !response.ok) {
     const errorPayload = response ? await response.json().catch(() => null) : null;
     const message = errorPayload?.error === "NO_COINS"
-<<<<<<< HEAD
       ? "Nicht genug Coins."
       : "Logo konnte nicht erstellt werden.";
-=======
-      ? "Nicht genug Coins fuer eine Logo-Generierung."
-      : "Logo konnte nicht generiert werden.";
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
     window.showToast(message, "error");
     if (result) {
       result.innerHTML = `<div class="empty-state">${window.escapeHtml(message)}</div>`;
@@ -429,26 +303,16 @@ window.generateLogoFromForm = async function generateLogoFromForm() {
   saveLocalProject({
     name: brandName,
     type: "Logo",
-<<<<<<< HEAD
     summary: `${game || "Game"} - ${style || "Style"}`
-=======
-    summary: `${game || "Game offen"} - ${style || "Style offen"}`
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
   });
 
   if (result) {
     result.innerHTML = `
       <div class="result-card">
         <h3>${window.escapeHtml(brandName)}</h3>
-<<<<<<< HEAD
         <p class="muted">Logo erstellt. DNA wurde gespeichert.</p>
         <div class="actions-row">
           <button class="btn secondary" type="button" onclick="downloadGeneratedLogo()">Logo herunterladen</button>
-=======
-        <p class="muted">Deine Brand-DNA wurde gespeichert. Das Ergebnisfenster rechts zeigt das frische Logo an.</p>
-        <div class="actions-row">
-          <button class="btn secondary" type="button" onclick="downloadGeneratedLogo()">Download Logo</button>
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
           <button class="btn secondary" type="button" onclick="copyLogoPrompt()">Prompt kopieren</button>
         </div>
       </div>
@@ -456,48 +320,7 @@ window.generateLogoFromForm = async function generateLogoFromForm() {
   }
 
   window.loadUser?.();
-<<<<<<< HEAD
   window.showToast("Logo erstellt und DNA gespeichert.");
-=======
-  window.showToast("Logo generiert und Brand-DNA gespeichert.");
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
-};
-
-window.downloadGeneratedLogo = function downloadGeneratedLogo() {
-  if (!window.CreatorState.logoImage) {
-<<<<<<< HEAD
-    window.showToast("Kein Logo zum Download vorhanden.", "error");
-=======
-    window.showToast("Noch kein Logo zum Download vorhanden.", "error");
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
-    return;
-  }
-
-  const link = document.createElement("a");
-  link.href = window.CreatorState.logoImage;
-  link.download = "creator-studio-logo.png";
-  link.click();
-};
-
-window.copyLogoPrompt = async function copyLogoPrompt() {
-  const brandName = document.getElementById("logoName")?.value.trim() || "";
-  const clanName = document.getElementById("logoClan")?.value.trim() || "";
-  const game = document.getElementById("logoGame")?.value || "";
-  const style = document.getElementById("logoStyle")?.value || "";
-<<<<<<< HEAD
-  const notes = document.getElementById("logoNotes")?.value.trim() || "";
-  const colors = Array.from(document.querySelectorAll('input[name="logoColor"]:checked')).map((input) => input.value);
-  const prompt = window.buildMagicPrompt({
-    name: brandName,
-    clan: clanName,
-    game,
-    style,
-    colors,
-    notes
-  });
-
-  await navigator.clipboard.writeText(prompt);
-  window.showToast("Prompt kopiert.");
 };
 
 window.buildMagicPrompt = function buildMagicPrompt({ name, clan, game, style, colors, notes }) {
@@ -653,262 +476,42 @@ window.buildMagicPrompt = function buildMagicPrompt({ name, clan, game, style, c
   ];
 
   return parts.filter((line, index, arr) => {
-    if (line) {
-      return true;
-    }
-
+    if (line) return true;
     return index > 0 && arr[index - 1] && arr.slice(index + 1).some(Boolean);
   }).join("\n");
 };
 
-function getLogoDnaBlueprints() {
-  try {
-    return JSON.parse(localStorage.getItem("creatorStudio.logoDnaSystem") || "[]");
-  } catch {
-    return [];
-  }
-}
-
-function setLogoDnaBlueprints(entries) {
-  localStorage.setItem("creatorStudio.logoDnaSystem", JSON.stringify(entries));
-}
-
-function addLogoDnaBlueprint(entry) {
-  const entries = getLogoDnaBlueprints();
-  const next = [{ ...entry, id: Date.now(), createdAt: new Date().toISOString() }, ...entries].slice(0, 20);
-  setLogoDnaBlueprints(next);
-}
-
-const DNA_ARCHETYPE_PROFILES = {
-  warrior: { label: "Warrior", vibe: "aggressive leadership", shape: "sharp geometric emblem", tone: "bold" },
-  guardian: { label: "Guardian", vibe: "trusted stability", shape: "shield inspired silhouette", tone: "balanced" },
-  visionary: { label: "Visionary", vibe: "future innovation", shape: "clean futuristic glyph", tone: "refined" },
-  phantom: { label: "Phantom", vibe: "mystic stealth", shape: "dark dynamic mark", tone: "dramatic" },
-  royal: { label: "Royal", vibe: "premium authority", shape: "ornamental crest", tone: "luxury" }
-};
-
-window.collectLogoDnaInput = function collectLogoDnaInput() {
-  const toInt = (id, fallback) => Number.parseInt(document.getElementById(id)?.value || String(fallback), 10);
-  return {
-    brandName: document.getElementById("dnaBrandName")?.value.trim() || "",
-    archetype: document.getElementById("dnaArchetype")?.value || "warrior",
-    domain: document.getElementById("dnaDomain")?.value.trim() || "",
-    symbol: document.getElementById("dnaSymbol")?.value.trim() || "",
-    energy: toInt("dnaEnergy", 7),
-    minimalism: toInt("dnaMinimalism", 6),
-    colorForce: toInt("dnaColorForce", 8),
-    typography: toInt("dnaTypography", 7)
-  };
-};
-
-window.buildLogoDnaBlueprint = function buildLogoDnaBlueprint(input) {
-  const profile = DNA_ARCHETYPE_PROFILES[input.archetype] || DNA_ARCHETYPE_PROFILES.warrior;
-  const dnaScore = Math.round(
-    (input.energy * 3.2)
-    + (input.colorForce * 2.6)
-    + (input.typography * 2.1)
-    + ((11 - input.minimalism) * 2.1)
-  );
-
-  const prompt = [
-    `Create a premium logo for "${input.brandName}".`,
-    `Archetype: ${profile.label} (${profile.vibe}).`,
-    input.domain ? `Domain or game context: ${input.domain}.` : "",
-    input.symbol ? `Core icon motif: ${input.symbol}.` : "",
-    `Visual shape language: ${profile.shape}.`,
-    `Tone: ${profile.tone}, energy ${input.energy}/10, minimalism ${input.minimalism}/10, color impact ${input.colorForce}/10, typography force ${input.typography}/10.`,
-    "Clean composition, center weighted, high readability, transparent friendly background."
-  ].filter(Boolean).join(" ");
-
-  return {
-    ...input,
-    archetypeLabel: profile.label,
-    dnaScore,
-    prompt
-  };
-};
-
-window.renderLogoDnaPreview = function renderLogoDnaPreview(blueprint) {
-  const target = document.getElementById("dnaPreviewPanel");
-  if (!target) {
+window.downloadGeneratedLogo = function downloadGeneratedLogo() {
+  if (!window.CreatorState.logoImage) {
+    window.showToast("Kein Logo zum Download vorhanden.", "error");
     return;
   }
 
-  target.innerHTML = `
-    <article class="result-card">
-      <h3>${window.escapeHtml(blueprint.brandName || "Unbenannt")}</h3>
-      <p class="muted">${window.escapeHtml(blueprint.archetypeLabel)} - DNA Score ${blueprint.dnaScore}</p>
-      <div class="tag-list">
-        <span class="tag">Energy ${blueprint.energy}/10</span>
-        <span class="tag">Minimalism ${blueprint.minimalism}/10</span>
-        <span class="tag">Color ${blueprint.colorForce}/10</span>
-        <span class="tag">Type ${blueprint.typography}/10</span>
-      </div>
-      <div class="empty-state" style="margin-top:12px; text-align:left;">
-        ${window.escapeHtml(blueprint.prompt)}
-      </div>
-    </article>
-  `;
+  const link = document.createElement("a");
+  link.href = window.CreatorState.logoImage;
+  link.download = "creator-studio-logo.png";
+  link.click();
 };
 
-window.renderLogoDnaLibrary = function renderLogoDnaLibrary() {
-  const target = document.getElementById("logoDnaLibraryList");
-  if (!target) {
-    return;
-  }
-
-  const entries = getLogoDnaBlueprints();
-  if (!entries.length) {
-    target.innerHTML = `<div class="empty-state">Noch keine DNA-Blueprints gespeichert.</div>`;
-    return;
-  }
-
-  target.innerHTML = entries.map((entry, index) => `
-    <article class="dna-item">
-      <div class="section-head">
-        <div>
-          <h3>${window.escapeHtml(entry.brandName || "Unbenannt")}</h3>
-          <p class="muted">${window.escapeHtml(entry.archetypeLabel || "Archetype")} - Score ${entry.dnaScore || "-"}</p>
-        </div>
-        <div class="actions-row">
-          <button class="btn secondary" type="button" onclick="loadLogoDnaBlueprint(${index})">Laden</button>
-          <button class="btn secondary" type="button" onclick="pushLogoDnaBlueprintToLogo(${index})">Zu Logo</button>
-        </div>
-      </div>
-    </article>
-  `).join("");
-};
-
-window.loadLogoDnaIntoForm = function loadLogoDnaIntoForm(blueprint) {
-  const mapping = {
-    dnaBrandName: blueprint.brandName,
-    dnaArchetype: blueprint.archetype,
-    dnaDomain: blueprint.domain,
-    dnaSymbol: blueprint.symbol,
-    dnaEnergy: blueprint.energy,
-    dnaMinimalism: blueprint.minimalism,
-    dnaColorForce: blueprint.colorForce,
-    dnaTypography: blueprint.typography
-  };
-
-  Object.entries(mapping).forEach(([id, value]) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.value = value ?? "";
-    }
-  });
-};
-
-window.loadLogoDnaBlueprint = function loadLogoDnaBlueprint(index) {
-  const entries = getLogoDnaBlueprints();
-  const entry = entries[index];
-  if (!entry) {
-    return;
-  }
-  window.loadLogoDnaIntoForm(entry);
-  window.renderLogoDnaPreview(entry);
-  window.showToast("DNA-Blueprint geladen.");
-};
-
-window.pushLogoDnaBlueprintToLogo = function pushLogoDnaBlueprintToLogo(index) {
-  const entries = getLogoDnaBlueprints();
-  const entry = entries[index];
-  if (!entry) {
-    return;
-  }
-
-  addBrandDna({
-    brandName: entry.brandName,
-    clanName: entry.symbol || "",
-    game: entry.domain || "",
-    style: entry.archetypeLabel || entry.archetype || "",
-    colors: [],
-    notes: `DNA Score ${entry.dnaScore}; prompt: ${entry.prompt}`
-  });
-  window.showToast("DNA ins Logo-System uebernommen.");
-};
-
-window.exportLogoDnaLibrary = async function exportLogoDnaLibrary() {
-  const entries = getLogoDnaBlueprints();
-  if (!entries.length) {
-    window.showToast("Keine DNA-Blueprints zum Export vorhanden.", "error");
-    return;
-  }
-
-  await navigator.clipboard.writeText(JSON.stringify(entries, null, 2));
-  window.showToast("DNA-Bibliothek als JSON in Zwischenablage kopiert.");
-};
-
-window.initLogoDnaPage = function initLogoDnaPage() {
-  const buildButton = document.getElementById("buildDnaBtn");
-  const saveButton = document.getElementById("saveDnaBlueprintBtn");
-  const pushButton = document.getElementById("pushDnaToLogoBtn");
-  const exportButton = document.getElementById("exportDnaLibraryBtn");
-  let currentBlueprint = null;
-
-  buildButton?.addEventListener("click", () => {
-    const input = window.collectLogoDnaInput();
-    if (!input.brandName) {
-      window.showToast("Bitte zuerst einen Markennamen eingeben.", "error");
-      return;
-    }
-
-    currentBlueprint = window.buildLogoDnaBlueprint(input);
-    window.renderLogoDnaPreview(currentBlueprint);
-    window.showToast("DNA analysiert.");
-  });
-
-  saveButton?.addEventListener("click", () => {
-    if (!currentBlueprint) {
-      const input = window.collectLogoDnaInput();
-      if (!input.brandName) {
-        window.showToast("Bitte zuerst DNA analysieren oder Namen eingeben.", "error");
-        return;
-      }
-      currentBlueprint = window.buildLogoDnaBlueprint(input);
-    }
-
-    addLogoDnaBlueprint(currentBlueprint);
-    window.renderLogoDnaLibrary();
-    window.showToast("Blueprint gespeichert.");
-  });
-
-  pushButton?.addEventListener("click", () => {
-    if (!currentBlueprint) {
-      const input = window.collectLogoDnaInput();
-      if (!input.brandName) {
-        window.showToast("Bitte zuerst DNA analysieren oder Namen eingeben.", "error");
-        return;
-      }
-      currentBlueprint = window.buildLogoDnaBlueprint(input);
-    }
-
-    addBrandDna({
-      brandName: currentBlueprint.brandName,
-      clanName: currentBlueprint.symbol || "",
-      game: currentBlueprint.domain || "",
-      style: currentBlueprint.archetypeLabel,
-      colors: [],
-      notes: `DNA Score ${currentBlueprint.dnaScore}; prompt: ${currentBlueprint.prompt}`
-    });
-    window.showToast("DNA in Logo uebernommen.");
-  });
-
-  exportButton?.addEventListener("click", window.exportLogoDnaLibrary);
-  window.renderLogoDnaLibrary();
-=======
+window.copyLogoPrompt = async function copyLogoPrompt() {
+  const brandName = document.getElementById("logoName")?.value.trim() || "";
+  const clanName = document.getElementById("logoClan")?.value.trim() || "";
+  const game = document.getElementById("logoGame")?.value || "";
+  const style = document.getElementById("logoStyle")?.value || "";
+  const notes = document.getElementById("logoNotes")?.value.trim() || "";
   const colors = Array.from(document.querySelectorAll('input[name="logoColor"]:checked')).map((input) => input.value);
-  const prompt = [
-    `Brand: ${brandName || "-"}`,
-    `Clan/Agent: ${clanName || "-"}`,
-    `Game: ${game || "-"}`,
-    `Style: ${style || "-"}`,
-    `Farben: ${colors.join(", ") || "-"}`
-  ].join("\n");
+
+  const prompt = window.buildMagicPrompt({
+    name: brandName,
+    clan: clanName,
+    game,
+    style,
+    colors,
+    notes
+  });
 
   await navigator.clipboard.writeText(prompt);
-  window.showToast("Prompt-Zusammenfassung in die Zwischenablage kopiert.");
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
+  window.showToast("Prompt kopiert.");
 };
 
 window.initStreamPage = function initStreamPage() {
@@ -921,11 +524,7 @@ window.generateStreamPackPlan = function generateStreamPackPlan() {
   const formatTypes = Array.from(document.querySelectorAll('input[name="streamFormat"]:checked')).map((input) => input.value);
 
   if (!brandName) {
-<<<<<<< HEAD
     window.showToast("Bitte einen Projektnamen eingeben.", "error");
-=======
-    window.showToast("Bitte gib einen Namen fuer das Streampack an.", "error");
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
     return;
   }
 
@@ -944,20 +543,12 @@ window.generateStreamPackPlan = function generateStreamPackPlan() {
     preview.innerHTML = `
       <div class="result-card">
         <h3>${window.escapeHtml(brandName)} Stream Pack</h3>
-<<<<<<< HEAD
         <p class="muted">Stream Pack erstellt. Auswahl ist gespeichert.</p>
-=======
-        <p class="muted">Das Paket wurde als saubere Produktionsvorlage vorbereitet und kann jetzt als Aufgabenliste oder Design-Briefing genutzt werden.</p>
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
         <div class="tag-list">
           ${selectedAssets.map((asset) => `<span class="tag">${window.escapeHtml(asset)}</span>`).join("")}
         </div>
         <ul class="mini-list list-reset">
-<<<<<<< HEAD
           ${selectedFormats.map((format) => `<li>Format: ${window.escapeHtml(format)}</li>`).join("")}
-=======
-          ${selectedFormats.map((format) => `<li>${window.escapeHtml(format)} Ausgabeformat geplant</li>`).join("")}
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
         </ul>
       </div>
     `;
@@ -966,47 +557,31 @@ window.generateStreamPackPlan = function generateStreamPackPlan() {
   if (downloadArea) {
     downloadArea.innerHTML = `
       <div class="empty-state">
-<<<<<<< HEAD
         ZIP-Export ist noch nicht verfuegbar.
-=======
-        Das Backend fuer ZIP-Export ist in dieser Frontend-Version noch nicht aktiv. Die Auswahl ist aber gespeichert und die Struktur laeuft jetzt ohne Fehler.
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
       </div>
     `;
   }
 
-<<<<<<< HEAD
   window.showToast("Stream Pack erstellt.");
-=======
-  window.showToast("Stream-Pack-Konzept erstellt.");
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
 };
 
 window.initVideoPage = function initVideoPage() {
   const input = document.getElementById("videoFile");
-<<<<<<< HEAD
   const generateButton = document.getElementById("generateVideoBtn");
   const analyzeButton = document.getElementById("analyzeVideoBtn");
-=======
-  const button = document.getElementById("generateVideoBtn");
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
 
   input?.addEventListener("change", (event) => {
     const file = event.target.files?.[0];
     window.CreatorState.uploadedVideoName = file?.name || "";
-<<<<<<< HEAD
     window.CreatorState.uploadedVideoFile = file || null;
     window.CreatorState.detectedHighlights = [];
     window.CreatorState.selectedHighlightIds = [];
     window.renderDetectedHighlights?.([]);
-=======
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
 
     const meta = document.getElementById("videoFileMeta");
     if (meta) {
       meta.textContent = file
         ? `${file.name} - ${Math.round(file.size / 1024 / 1024)} MB`
-<<<<<<< HEAD
         : "Kein Video ausgewaehlt";
     }
   });
@@ -1017,9 +592,7 @@ window.initVideoPage = function initVideoPage() {
 
 window.renderDetectedHighlights = function renderDetectedHighlights(highlights) {
   const target = document.getElementById("detectedHighlightsList");
-  if (!target) {
-    return;
-  }
+  if (!target) return;
 
   if (!Array.isArray(highlights) || !highlights.length) {
     target.className = "empty-state";
@@ -1097,7 +670,7 @@ window.analyzeVideoHighlights = async function analyzeVideoHighlights() {
 
   let highlights = mockHighlights;
   try {
-    const response = await window.authFetch("https://logomakergermany-ultimate-backend-production.up.railway.app/api/video/analyze-highlights", {
+    const response = await window.authFetch("/api/video/analyze-highlights", {
       method: "POST",
       body: payload
     });
@@ -1209,7 +782,7 @@ window.generateVideoPlan = async function generateVideoPlan() {
   };
 
   let renderResult = null;
-  const response = await window.authFetch("https://logomakergermany-ultimate-backend-production.up.railway.app/api/video/build-short", {
+  const response = await window.authFetch("/api/video/build-short", {
     method: "POST",
     body: JSON.stringify(requestPayload)
   });
@@ -1234,47 +807,10 @@ window.generateVideoPlan = async function generateVideoPlan() {
             <a class="btn secondary" href="${window.escapeHtml(renderResult.videoUrl)}" target="_blank" rel="noopener noreferrer">Video oeffnen</a>
           </div>
         ` : ""}
-=======
-        : "Noch kein Video ausgewaehlt";
-    }
-  });
-
-  button?.addEventListener("click", window.generateVideoPlan);
-};
-
-window.generateVideoPlan = function generateVideoPlan() {
-  const title = document.getElementById("videoTitle")?.value.trim() || "";
-  const highlightTypes = Array.from(document.querySelectorAll('input[name="highlightType"]:checked')).map((input) => input.value);
-  const outputFormats = Array.from(document.querySelectorAll('input[name="outputFormat"]:checked')).map((input) => input.value);
-  const result = document.getElementById("videoPlanResult");
-
-  if (!window.CreatorState.uploadedVideoName) {
-    window.showToast("Bitte zuerst ein Gameplay-Video auswaehlen.", "error");
-    return;
-  }
-
-  saveLocalProject({
-    name: title || window.CreatorState.uploadedVideoName,
-    type: "Video Builder",
-    summary: `${highlightTypes.length || 1} Highlight-Typen - ${outputFormats.length || 1} Formate`
-  });
-
-  if (result) {
-    result.innerHTML = `
-      <div class="result-card">
-        <h3>${window.escapeHtml(title || "Video Builder Auftrag")}</h3>
-        <p class="muted">Upload registriert: ${window.escapeHtml(window.CreatorState.uploadedVideoName)}</p>
-        <ul class="mini-list list-reset">
-          <li>Highlight Detection: ${(highlightTypes.length ? highlightTypes : ["Action Scenes"]).map(window.escapeHtml).join(", ")}</li>
-          <li>Ausgabeformate: ${(outputFormats.length ? outputFormats : ["TikTok 9:16"]).map(window.escapeHtml).join(", ")}</li>
-          <li>Naechster Schritt: Thumbnail oder Mini-Player auf Basis des Uploads ausgeben</li>
-        </ul>
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
       </div>
     `;
   }
 
-<<<<<<< HEAD
   const preview = document.getElementById("videoPreviewFrame");
   if (preview) {
     preview.innerHTML = `
@@ -1292,21 +828,16 @@ window.generateVideoPlan = function generateVideoPlan() {
   }
 
   window.showToast("Video exportiert.");
-=======
-  window.showToast("Video-Builder-Vorlage erstellt.");
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
 };
 
 window.initSystemPage = async function initSystemPage() {
   const statusTarget = document.getElementById("backendStatus");
-  if (!statusTarget) {
-    return;
-  }
+  if (!statusTarget) return;
 
   try {
-    const response = await fetch(`${window.APP_CONFIG.apiBase}/api/test`);
+    const response = await fetch(`${window.APP_CONFIG.apiBase}/api/health`);
     const payload = await response.json();
-    const isOk = Boolean(payload?.status === "running");
+    const isOk = Boolean(payload?.status === "ok");
     statusTarget.innerHTML = `
       <div class="status-panel">
         <div class="section-head">
@@ -1318,8 +849,6 @@ window.initSystemPage = async function initSystemPage() {
         </div>
         <ul class="mini-list list-reset">
           <li>Server: ${isOk ? "erreichbar" : "nicht erreichbar"}</li>
-          <li>Firebase: ${payload?.firebase ? "verbunden" : "nicht bestaetigt"}</li>
-          <li>OpenAI: ${payload?.openai ? "konfiguriert" : "nicht bestaetigt"}</li>
         </ul>
       </div>
     `;
@@ -1336,4 +865,35 @@ window.initSystemPage = async function initSystemPage() {
       </div>
     `;
   }
+};
+
+window.consumeCoins = async function consumeCoins(amount = 1) {
+  const response = await window.authFetch("/api/use-coins", {
+    method: "POST",
+    body: JSON.stringify({ amount })
+  });
+
+  if (!response) {
+    return { ok: false, reason: "NETWORK", message: "Coin-Pruefung fehlgeschlagen." };
+  }
+
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const isNoCoins = payload?.error === "NO_COINS"
+      || payload?.code === "NO_COINS"
+      || response.status === 402;
+
+    if (isNoCoins) {
+      return { ok: false, reason: "NO_COINS", message: "Nicht genug Coins." };
+    }
+
+    return {
+      ok: false,
+      reason: "FAILED",
+      message: payload?.message || payload?.error || "Coin-Abbuchung fehlgeschlagen."
+    };
+  }
+
+  return { ok: true, payload };
 };

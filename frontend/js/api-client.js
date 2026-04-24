@@ -2,7 +2,7 @@
 window.ApiClient = {
   // Base configuration
   config: {
-    baseUrl: window.APP_CONFIG?.apiBase || 'http://localhost:3000',
+    baseUrl: window.APP_CONFIG?.apiBase || '',
     timeout: 30000,
     retries: 2
   },

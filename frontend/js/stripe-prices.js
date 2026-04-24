@@ -4,7 +4,7 @@ window.stripePrices = {
   
   async loadPrices() {
     try {
-      const response = await window.authFetch("https://logomakergermany-ultimate-backend-production.up.railway.app/api/stripe-prices");
+      const response = await window.authFetch("/api/stripe-prices");
       
       if (!response || !response.ok) {
         throw new Error(`API Error: ${response?.status}`);
@@ -29,42 +29,42 @@ window.stripePrices = {
     // Preise mit data-Attributen aktualisieren
     const starterAmount = document.querySelector('[data-package="starter-amount"]');
     const starterCoins = document.querySelector('[data-package="starter-coins"]');
-    const professionalAmount = document.querySelector('[data-package="professional-amount"]');
-    const professionalCoins = document.querySelector('[data-package="professional-coins"]');
-    const enterpriseAmount = document.querySelector('[data-package="enterprise-amount"]');
-    const enterpriseCoins = document.querySelector('[data-package="enterprise-coins"]');
+    const proAmount = document.querySelector('[data-package="pro-amount"]');
+    const proCoins = document.querySelector('[data-package="pro-coins"]');
+    const ultimateAmount = document.querySelector('[data-package="ultimate-amount"]');
+    const ultimateCoins = document.querySelector('[data-package="ultimate-coins"]');
     
     // Starter Paket
     if (starterAmount && this.currentPrices.starter) {
-      starterAmount.textContent = (this.currentPrices.starter.amount / 100).toFixed(2);
+      starterAmount.textContent = this.currentPrices.starter.price.toFixed(2);
     }
     if (starterCoins && this.currentPrices.starter) {
       starterCoins.textContent = `${this.currentPrices.starter.coins} Coins`;
     }
     
-    // Professional Paket
-    if (professionalAmount && this.currentPrices.professional) {
-      professionalAmount.textContent = (this.currentPrices.professional.amount / 100).toFixed(2);
+    // Pro Paket
+    if (proAmount && this.currentPrices.pro) {
+      proAmount.textContent = this.currentPrices.pro.price.toFixed(2);
     }
-    if (professionalCoins && this.currentPrices.professional) {
-      professionalCoins.textContent = `${this.currentPrices.professional.coins} Coins`;
+    if (proCoins && this.currentPrices.pro) {
+      proCoins.textContent = `${this.currentPrices.pro.coins} Coins`;
     }
     
-    // Enterprise Paket
-    if (enterpriseAmount && this.currentPrices.enterprise) {
-      enterpriseAmount.textContent = (this.currentPrices.enterprise.amount / 100).toFixed(2);
+    // Ultimate Paket
+    if (ultimateAmount && this.currentPrices.ultimate) {
+      ultimateAmount.textContent = this.currentPrices.ultimate.price.toFixed(2);
     }
-    if (enterpriseCoins && this.currentPrices.enterprise) {
-      enterpriseCoins.textContent = `${this.currentPrices.enterprise.coins} Coins`;
+    if (ultimateCoins && this.currentPrices.ultimate) {
+      ultimateCoins.textContent = `${this.currentPrices.ultimate.coins} Coins`;
     }
   },
   
   showFallbackPrices() {
     // Fallback Preise falls API nicht erreichbar
     const fallbackPrices = {
-      starter: { amount: 599, coins: 50 },
-      professional: { amount: 1599, coins: 150 },
-      enterprise: { amount: 4999, coins: 500 }
+      starter: { price: 4.99, coins: 50 },
+      pro: { price: 9.99, coins: 150 },
+      ultimate: { price: 19.99, coins: 500 }
     };
     
     this.currentPrices = fallbackPrices;
