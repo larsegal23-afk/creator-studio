@@ -73,9 +73,18 @@ window.showToast = function showToast(message, type = "success") {
 
 window.getAuthToken = async function getAuthToken(forceRefresh = false) {
   try {
+    // Warte auf Firebase Auth Initialisierung (max 5 Sekunden)
+    let attempts = 0;
+    while (!firebase.auth().currentUser && attempts < 50) {
+      await new Promise(r => setTimeout(r, 100));
+      attempts++;
+    }
+    
     const user = firebase.auth().currentUser;
     if (user) {
-      return await user.getIdToken(forceRefresh);
+      const token = await user.getIdToken(forceRefresh);
+      localStorage.setItem("token", token);
+      return token;
     }
   } catch (error) {
     console.log("Token refresh failed", error);
@@ -84,9 +93,13 @@ window.getAuthToken = async function getAuthToken(forceRefresh = false) {
 };
 
 window.authFetch = async function authFetch(path, options = {}) {
+  console.log(`[authFetch] Starting request to: ${path}`);
+  
   const token = await window.getAuthToken();
+  console.log(`[authFetch] Token received: ${token ? 'YES' : 'NO'}`);
 
   if (!token) {
+    console.error("[authFetch] No token available!");
     window.showToast("Nicht eingeloggt", "error");
     return null;
   }
@@ -100,11 +113,16 @@ window.authFetch = async function authFetch(path, options = {}) {
     headers["Content-Type"] = "application/json";
   }
 
+  const url = `${window.APP_CONFIG?.apiBase || 'https://creator-studio-production-d0ed.up.railway.app'}${path}`;
+  console.log(`[authFetch] Full URL: ${url}`);
+  
   try {
-    const response = await fetch(`${window.APP_CONFIG.apiBase}${path}`, {
+    const response = await fetch(url, {
       ...options,
       headers
     });
+    
+    console.log(`[authFetch] Response status: ${response.status}`);
 
     if (response.status === 401) {
       await window.logout();
@@ -113,7 +131,7 @@ window.authFetch = async function authFetch(path, options = {}) {
 
     return response;
   } catch (error) {
-    console.log("API request failed", error);
+    console.error("[authFetch] Network error:", error);
     window.showToast("Netzwerkfehler. Bitte erneut versuchen.", "error");
     return null;
   }
