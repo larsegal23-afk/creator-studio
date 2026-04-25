@@ -49,9 +49,10 @@ class CoinsManager {
       console.log(`Purchasing ${packageType} package...`);
       
       const packages = {
-        starter: { name: 'Starter', coins: 50, price: '4,99€' },
-        pro: { name: 'Professional', coins: 150, price: '12,99€' },
-        ultimate: { name: 'Enterprise', coins: 500, price: '39,99€' }
+        starter: { name: 'Starter', coins: 120, price: '4,99€' },
+        advanced: { name: 'Advanced', coins: 300, price: '9,99€' },
+        pro: { name: 'Pro', coins: 700, price: '19,99€' },
+        ultimate: { name: 'Ultimate', coins: 2000, price: '49,90€' }
       };
 
       const selectedPackage = packages[packageType];
@@ -124,9 +125,10 @@ class CoinsManager {
     purchaseButtons.forEach(button => {
       const packageType = button.dataset.coinsPurchase;
       const packages = {
-        starter: { coins: 50 },
-        pro: { coins: 150 },
-        ultimate: { coins: 500 }
+        starter: { coins: 120 },
+        advanced: { coins: 300 },
+        pro: { coins: 700 },
+        ultimate: { coins: 2000 }
       };
 
       const packageInfo = packages[packageType];
