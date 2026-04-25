@@ -111,6 +111,24 @@ console.log(`🔑 Stripe Key starts with: ${stripeKey?.substring(0, 7) || 'N/A'}
 const stripe = new Stripe(stripeKey)
 
 // ================================
+// PAYPAL
+// ================================
+import paypal from "@paypal/checkout-server-sdk"
+
+const paypalEnvironment = process.env.PAYPAL_MODE === "live" 
+  ? new paypal.core.LiveEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET)
+  : new paypal.core.SandboxEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET)
+
+const paypalClient = new paypal.core.PayPalHttpClient(paypalEnvironment)
+
+const PAYPAL_PACKAGES = {
+  starter: { coins: 120, price: "4.99" },
+  advanced: { coins: 300, price: "9.99" },
+  pro: { coins: 700, price: "19.99" },
+  ultimate: { coins: 2000, price: "49.90" }
+}
+
+// ================================
 // CONFIG
 // ================================
 const MAX_COINS = 1000000
@@ -330,6 +348,86 @@ app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async
   }
 
   res.json({ received: true })
+})
+
+// ================================
+// PAYPAL ENDPOINTS
+// ================================
+
+// Create PayPal Order
+app.post("/api/create-paypal-order", requireAuth, async (req, res) => {
+  const { pack } = req.body
+  
+  console.log(`PayPal order request: pack="${pack}"`)
+
+  const selected = PAYPAL_PACKAGES[pack]
+  if (!selected) {
+    return res.status(400).json({ error: "Invalid package", received: pack })
+  }
+
+  try {
+    const request = new paypal.orders.OrdersCreateRequest()
+    request.requestBody({
+      intent: "CAPTURE",
+      purchase_units: [{
+        amount: {
+          currency_code: "EUR",
+          value: selected.price
+        },
+        description: `${selected.coins} Coins - ${pack} Package`,
+        custom_id: `${req.user.uid}:${pack}`
+      }]
+    })
+
+    const order = await paypalClient.execute(request)
+    
+    console.log(`✅ PayPal order created: ${order.result.id}`)
+    res.json({ orderId: order.result.id })
+    
+  } catch (error) {
+    console.error("❌ PayPal order error:", error.message)
+    res.status(500).json({ error: "PayPal order failed", message: error.message })
+  }
+})
+
+// Capture PayPal Order (after payment)
+app.post("/api/capture-paypal-order", requireAuth, async (req, res) => {
+  const { orderId } = req.body
+  
+  console.log(`PayPal capture request: orderId="${orderId}"`)
+
+  try {
+    const request = new paypal.orders.OrdersCaptureRequest(orderId)
+    const capture = await paypalClient.execute(request)
+    
+    const purchaseUnit = capture.result.purchase_units[0]
+    const customId = purchaseUnit.payments.captures[0].custom_id
+    const [uid, pack] = customId.split(":")
+    
+    // Verify UID matches
+    if (uid !== req.user.uid) {
+      return res.status(403).json({ error: "UID mismatch" })
+    }
+    
+    const selected = PAYPAL_PACKAGES[pack]
+    if (!selected) {
+      return res.status(400).json({ error: "Invalid package" })
+    }
+
+    // Credit coins
+    const userRef = db.collection("users").doc(uid)
+    const userDoc = await userRef.get()
+    const current = userDoc.exists ? userDoc.data().coins || 0 : 0
+    
+    await userRef.set({ coins: current + selected.coins }, { merge: true })
+    
+    console.log(`💰 ${selected.coins} Coins credited to ${uid} via PayPal`)
+    res.json({ success: true, coins: selected.coins, balance: current + selected.coins })
+    
+  } catch (error) {
+    console.error("❌ PayPal capture error:", error.message)
+    res.status(500).json({ error: "PayPal capture failed", message: error.message })
+  }
 })
 
 // ================================

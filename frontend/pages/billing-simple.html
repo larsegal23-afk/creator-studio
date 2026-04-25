@@ -133,3 +133,81 @@
     </div>
   </article>
 </section>
+
+<!-- PayPal Integration -->
+<script src="https://www.paypal.com/sdk/js?client-id=sb&currency=EUR" data-namespace="paypal_sdk"></script>
+<script>
+// PayPal Buttons für jedes Paket
+const paypalPackages = {
+  starter: { coins: 120, price: '4.99' },
+  advanced: { coins: 300, price: '9.99' },
+  pro: { coins: 700, price: '19.99' },
+  ultimate: { coins: 2000, price: '49.90' }
+};
+
+async function initPayPalButtons() {
+  // Prüfen ob PayPal ENV Variablen gesetzt sind
+  try {
+    const response = await fetch('/api/health');
+    if (!response.ok) return;
+  } catch (e) {
+    console.log('PayPal not available');
+    return;
+  }
+  
+  // Für jedes Paket PayPal Button rendern
+  Object.keys(paypalPackages).forEach(pack => {
+    const container = document.getElementById(`paypal-button-${pack}`);
+    if (container && window.paypal_sdk) {
+      window.paypal_sdk.Buttons({
+        createOrder: async () => {
+          const token = await window.getAuthToken();
+          const response = await fetch('/api/create-paypal-order', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ pack })
+          });
+          const data = await response.json();
+          return data.orderId;
+        },
+        onApprove: async (data) => {
+          const token = await window.getAuthToken();
+          const response = await fetch('/api/capture-paypal-order', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ orderId: data.orderID })
+          });
+          const result = await response.json();
+          if (result.success) {
+            alert(`✅ ${result.coins} Coins wurden deinem Konto gutgeschrieben!`);
+            window.location.href = '/#dashboard';
+          }
+        }
+      }).render(container);
+    }
+  });
+}
+
+// PayPal Container zu den Pricing Cards hinzufügen
+document.addEventListener('DOMContentLoaded', () => {
+  const cards = document.querySelectorAll('.pricing-card');
+  cards.forEach((card, index) => {
+    const packs = ['starter', 'advanced', 'pro', 'ultimate'];
+    const pack = packs[index];
+    if (pack) {
+      const paypalDiv = document.createElement('div');
+      paypalDiv.id = `paypal-button-${pack}`;
+      paypalDiv.style.marginTop = '10px';
+      card.appendChild(paypalDiv);
+    }
+  });
+  
+  initPayPalButtons();
+});
+</script>
