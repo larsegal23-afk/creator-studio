@@ -19,6 +19,14 @@
     <article class="stat-card">
       <p class="muted">Coins</p>
       <strong id="coinsValue" class="stat-value">-</strong>
+      <script>
+        // Load coins on dashboard init
+        setTimeout(function() {
+          if (typeof window.loadCoins === 'function') {
+            window.loadCoins();
+          }
+        }, 500);
+      </script>
     </article>
     <article class="stat-card">
       <p class="muted">Lokale Projekte</p>
@@ -36,9 +44,10 @@
         </div>
       </div>
       <div class="actions-row">
-        <button class="btn" type="button" onclick="buyCoins('small')">100 Coins</button>
-        <button class="btn secondary" type="button" onclick="buyCoins('medium')">300 Coins</button>
-        <button class="btn secondary" type="button" onclick="buyCoins('large')">700 Coins</button>
+        <button class="btn" type="button" onclick="window.coinsManager?.purchaseCoins('starter')">120 Coins (4,99€)</button>
+        <button class="btn secondary" type="button" onclick="window.coinsManager?.purchaseCoins('pro')">300 Coins (9,99€)</button>
+        <button class="btn secondary" type="button" onclick="window.coinsManager?.purchaseCoins('ultimate')">700 Coins (19,99€)</button>
+        <button class="btn secondary" type="button" onclick="window.coinsManager?.purchaseCoins('enterprise')">2000 Coins (49,90€)</button>
       </div>
     </article>
 

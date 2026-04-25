@@ -62,6 +62,14 @@ class CoinsManager {
       // Show loading state
       window.showToast(`Starte Kauf von ${selectedPackage.name} Paket...`, 'info');
 
+      // 🔥 WICHTIG: Frisches Token holen vor Checkout!
+      console.log('Refreshing token before checkout...');
+      const freshToken = await window.getAuthToken(true); // forceRefresh = true
+      if (!freshToken) {
+        throw new Error('Nicht eingeloggt - bitte neu anmelden');
+      }
+      console.log('Token refreshed successfully');
+
       // Create Stripe checkout session
       const response = await window.authFetch('/api/create-checkout-session', {
         method: 'POST',

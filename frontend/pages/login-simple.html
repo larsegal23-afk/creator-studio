@@ -1,0 +1,137 @@
+<section class="page-stack">
+  <article class="hero-card">
+    <div class="hero-copy">
+      <p class="hero-kicker">Zugang</p>
+      <h1>Anmelden und direkt starten.</h1>
+      <p>Nach dem Login werden Coins und Module automatisch synchronisiert.</p>
+      <button onclick="location.reload(true)" style="margin-top: 10px; padding: 5px 10px; background: #444; color: white; border: none; cursor: pointer;">🔄 Seite neu laden (Cache leeren)</button>
+    </div>
+    <div class="hero-visual"></div>
+  </article>
+
+  <article class="card" style="max-width: 560px;">
+    <div class="section-head">
+      <div>
+        <h2>Login</h2>
+        <p class="muted">Sicher ueber Firebase.</p>
+      </div>
+    </div>
+
+    <form id="loginFormSimple" class="form-grid">
+      <div class="field">
+        <label for="loginEmail">Email</label>
+        <input id="loginEmail" class="input" type="email" placeholder="name@studio.de" autocomplete="email" value="larsegal23@googlemail.com">
+      </div>
+
+      <div class="field">
+        <label for="loginPassword">Passwort</label>
+        <input id="loginPassword" class="input" type="password" placeholder="Passwort" autocomplete="current-password">
+      </div>
+
+      <div class="actions-row">
+        <button id="loginBtnSimple" class="btn primary" type="submit">Login</button>
+      </div>
+    </form>
+
+    <p id="loginStatus" class="muted">Bitte mit deinem Konto anmelden.</p>
+  </article>
+</section>
+
+<script>
+console.log('=== LOGIN SCRIPT LOADING ===');
+
+// Warte auf DOM
+setTimeout(function() {
+  console.log('Setting up login handler...');
+  
+  var form = document.getElementById('loginFormSimple');
+  var btn = document.getElementById('loginBtnSimple');
+  var status = document.getElementById('loginStatus');
+  
+  console.log('Form found:', !!form);
+  console.log('Button found:', !!btn);
+  
+  if (!form) {
+    console.error('Login form not found!');
+    return;
+  }
+  
+  form.addEventListener('submit', function(e) {
+    console.log('Login form submitted!');
+    e.preventDefault();
+    
+    var email = document.getElementById('loginEmail').value;
+    var password = document.getElementById('loginPassword').value;
+    
+    console.log('Email:', email);
+    console.log('Password length:', password.length);
+    
+    if (!email || !password) {
+      if (status) status.textContent = 'Bitte Email und Passwort eingeben.';
+      return;
+    }
+    
+    btn.disabled = true;
+    btn.textContent = 'Wird eingeloggt...';
+    if (status) status.textContent = 'Login wird verarbeitet...';
+    
+    // Check if Firebase is loaded
+    if (typeof firebase === 'undefined') {
+      console.error('Firebase not loaded!');
+      if (status) status.textContent = 'Fehler: Firebase nicht geladen';
+      btn.disabled = false;
+      btn.textContent = 'Login';
+      return;
+    }
+    
+    // Check if window.login exists
+    if (typeof window.login !== 'function') {
+      console.error('window.login function not found!');
+      
+      // Fallback: Use Firebase directly
+      firebase.auth().signInWithEmailAndPassword(email, password)
+        .then(function(userCredential) {
+          console.log('Login successful:', userCredential.user.email);
+          return userCredential.user.getIdToken();
+        })
+        .then(function(token) {
+          localStorage.setItem('token', token);
+          if (status) status.textContent = 'Login erfolgreich! Weiterleitung...';
+          setTimeout(function() {
+            window.location.href = '#/dashboard';
+          }, 1000);
+        })
+        .catch(function(error) {
+          console.error('Login error:', error);
+          if (status) status.textContent = 'Login fehlgeschlagen: ' + error.message;
+          btn.disabled = false;
+          btn.textContent = 'Login';
+        });
+      return;
+    }
+    
+    // Use window.login if available
+    window.login(email, password)
+      .then(function(result) {
+        if (result.success) {
+          if (status) status.textContent = 'Login erfolgreich! Weiterleitung...';
+          setTimeout(function() {
+            window.location.href = '#/dashboard';
+          }, 1000);
+        } else {
+          if (status) status.textContent = 'Login fehlgeschlagen: ' + result.error;
+          btn.disabled = false;
+          btn.textContent = 'Login';
+        }
+      })
+      .catch(function(error) {
+        console.error('Login error:', error);
+        if (status) status.textContent = 'Fehler: ' + error.message;
+        btn.disabled = false;
+        btn.textContent = 'Login';
+      });
+  });
+  
+  console.log('Login handler attached successfully!');
+}, 100);
+</script>

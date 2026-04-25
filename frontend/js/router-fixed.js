@@ -13,12 +13,32 @@ window.Router = {
       return;
     }
     
+    // Render initial components (before route handling)
+    const initialRoute = window.location.hash.slice(1) || 'dashboard';
+    if (typeof window.renderTopbar === 'function') {
+      window.renderTopbar(initialRoute);
+    }
+    if (typeof window.renderSidebar === 'function') {
+      window.renderSidebar(initialRoute);
+    }
+    
     // Handle initial route
     this.handleRoute();
     
     // Handle hash changes
     window.addEventListener('hashchange', () => {
       this.handleRoute();
+    });
+    
+    // Re-render components when auth state changes
+    firebase.auth().onAuthStateChanged(() => {
+      const currentRoute = window.location.hash.slice(1) || 'dashboard';
+      if (typeof window.renderTopbar === 'function') {
+        window.renderTopbar(currentRoute);
+      }
+      if (typeof window.renderSidebar === 'function') {
+        window.renderSidebar(currentRoute);
+      }
     });
     
     console.log('Router initialized');
@@ -65,7 +85,7 @@ window.Router = {
           pageFile = 'dashboard-fixed.html';
           break;
         case 'login':
-          pageFile = 'login.html';
+          pageFile = 'login-simple.html';
           break;
         default:
           pageFile = 'dashboard.html';
@@ -125,19 +145,35 @@ window.Router = {
         case 'dashboard':
           this.loadDashboardData();
           break;
+        case 'login':
+          // Initialize login page handler
+          setTimeout(() => {
+            if (typeof window.initLoginPage === 'function') {
+              window.initLoginPage();
+            }
+          }, 300);
+          break;
       }
     }, 100);
   },
   
   updateNavigation(currentRoute) {
-    // Update sidebar navigation
-    const navButtons = document.querySelectorAll('.sidebar button');
-    navButtons.forEach(button => {
-      const buttonRoute = button.getAttribute('onclick')?.match(/loadPage\('([^']+)'\)/)?.[1];
-      if (buttonRoute === currentRoute) {
-        button.classList.add('active');
+    // Render topbar and sidebar components
+    if (typeof window.renderTopbar === 'function') {
+      window.renderTopbar(currentRoute);
+    }
+    if (typeof window.renderSidebar === 'function') {
+      window.renderSidebar(currentRoute);
+    }
+    
+    // Update sidebar navigation active states
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+      const itemRoute = item.getAttribute('href')?.replace('#', '');
+      if (itemRoute === currentRoute) {
+        item.classList.add('active');
       } else {
-        button.classList.remove('active');
+        item.classList.remove('active');
       }
     });
   },
