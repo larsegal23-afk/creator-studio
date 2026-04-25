@@ -12,13 +12,8 @@
     "dotenv": "*",
     "express": "*",
     "express-rate-limit": "*",
-    "ffmpeg-static": "*",
-    "ffprobe-static": "*",
     "firebase-admin": "*",
     "helmet": "^7.0.0",
-    "multer": "*",
-    "openai": "*",
-    "stripe": "*",
-    "tesseract.js": "^7.0.0"
+    "stripe": "*"
   }
 }
