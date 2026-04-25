@@ -1,5 +1,6 @@
 node_modules
 npm-debug.log
+package-lock.json
 .env
 .env.example
 .env.production
@@ -7,5 +8,6 @@ npm-debug.log
 .gitignore
 README.md
 media/
+api/
 firebase-service-account.json
 logomakergermany*.json
