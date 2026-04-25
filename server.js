@@ -545,25 +545,25 @@ app.post("/api/create-checkout-session", requireAuth, async (req, res) => {
     const { pack } = req.body
     const uid = req.user.uid
 
-    // Paket-Konfiguration mit Originalpreisen aus pricing.html
+    // Paket-Konfiguration – Keys müssen mit dem Frontend übereinstimmen (starter, pro, ultimate)
     const packages = {
-      coins120: {
+      starter: {
         name: "Starter (120 Coins)",
         coins: 120,
         price: 499, // 4,99 € in Cent
         priceId: process.env.STRIPE_PRICE_STARTER || null
       },
-      coins700: {
+      pro: {
         name: "Professional (700 Coins)",
         coins: 700,
         price: 1999, // 19,99 € in Cent
-        priceId: process.env.STRIPE_PRICE_PROFESSIONAL || null
+        priceId: process.env.STRIPE_PRICE_PRO || null
       },
-      coins2000: {
+      ultimate: {
         name: "Enterprise (2000 Coins)",
         coins: 2000,
         price: 4999, // 49,99 € in Cent
-        priceId: process.env.STRIPE_PRICE_ENTERPRISE || null
+        priceId: process.env.STRIPE_PRICE_ULTIMATE || null
       }
     }
 
@@ -573,10 +573,10 @@ app.post("/api/create-checkout-session", requireAuth, async (req, res) => {
     }
 
     // Stripe Checkout Session erstellen
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: [
-        {
+    // Wenn eine vorkonfigurierte Price ID vorhanden ist, diese verwenden – sonst inline price_data
+    const lineItem = selectedPackage.priceId
+      ? { price: selectedPackage.priceId, quantity: 1 }
+      : {
           price_data: {
             currency: "eur",
             product_data: {
@@ -587,7 +587,10 @@ app.post("/api/create-checkout-session", requireAuth, async (req, res) => {
           },
           quantity: 1
         }
-      ],
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: [lineItem],
       mode: "payment",
       success_url: `${process.env.FRONTEND_URL || "https://logomakergermany-kreativtool.web.app"}/success?session_id={CHECKOUT_SESSION_ID}&pack=${pack}&coins=${selectedPackage.coins}`,
       cancel_url: `${process.env.FRONTEND_URL || "https://logomakergermany-kreativtool.web.app"}/cancel`,
