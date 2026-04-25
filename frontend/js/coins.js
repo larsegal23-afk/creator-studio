@@ -71,10 +71,19 @@ class CoinsManager {
       }
       console.log('Token refreshed successfully');
 
+      // 🔥 BACKWARDS COMPATIBILITY: Map new names to old backend keys
+      const packageMapping = {
+        'starter': 'coins120',
+        'advanced': 'coins300', 
+        'pro': 'coins700',
+        'ultimate': 'coins2000'
+      };
+      const backendPack = packageMapping[packageType] || packageType;
+      
       // Create Stripe checkout session
       const response = await window.authFetch('/api/create-checkout-session', {
         method: 'POST',
-        body: JSON.stringify({ pack: packageType })
+        body: JSON.stringify({ pack: backendPack })
       });
 
       if (!response) {
