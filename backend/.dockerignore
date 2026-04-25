@@ -1,0 +1,11 @@
+node_modules
+npm-debug.log
+.env
+.env.example
+.env.production
+.git
+.gitignore
+README.md
+media/
+firebase-service-account.json
+logomakergermany*.json

@@ -7,7 +7,7 @@ import rateLimit from "express-rate-limit"
 import helmet from "helmet"
 
 dotenv.config()
-// Railway deployment v2.1 - 4 packages fixed
+// Railway deployment v2.2 - 4 packages fixed - 25.04.2025
 
 const app = express()
 const PORT = process.env.PORT || 3000
