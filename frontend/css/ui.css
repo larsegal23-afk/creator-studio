@@ -186,6 +186,12 @@ button {
   flex-direction: column;
 }
 
+.main-shell.full-width {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
 .topbar {
   position: sticky;
   top: 0;
