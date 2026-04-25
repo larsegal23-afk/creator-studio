@@ -105,7 +105,10 @@ try {
 // ================================
 // STRIPE
 // ================================
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+const stripeKey = process.env.STRIPE_SECRET_KEY
+console.log(`🔑 Stripe Key check: ${stripeKey ? 'EXISTS' : 'MISSING'} (length: ${stripeKey?.length || 0})`)
+console.log(`🔑 Stripe Key starts with: ${stripeKey?.substring(0, 7) || 'N/A'}`)
+const stripe = new Stripe(stripeKey)
 
 // ================================
 // CONFIG
