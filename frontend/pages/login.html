@@ -14,7 +14,7 @@
     <div class="section-head">
       <div>
         <h2 id="formTitle">Login</h2>
-        <p class="muted" id="formSubtitle">Sicher ueber Firebase.</p>
+        <p class="muted" id="formSubtitle">Sicher über Firebase.</p>
       </div>
       <div class="tabs">
         <button id="loginTab" class="tab active" type="button">Login</button>
@@ -22,38 +22,59 @@
       </div>
     </div>
 
+    <!-- Rate-limit warning (hidden by default) -->
+    <p id="rateLimitWarning" class="rate-limit-warning" role="alert" aria-live="assertive"></p>
+
     <!-- Login Form -->
-    <form id="loginForm" class="form-grid auth-form">
+    <form id="loginForm" class="form-grid auth-form" novalidate>
       <div class="field">
-        <label for="email">Email</label>
-        <input id="email" class="input" type="email" placeholder="name@studio.de" autocomplete="email">
+        <label for="email">E-Mail</label>
+        <input id="email" class="input" type="email" placeholder="name@studio.de"
+               autocomplete="email" required>
       </div>
 
       <div class="field">
         <label for="password">Passwort</label>
-        <input id="password" class="input" type="password" placeholder="Passwort" autocomplete="current-password">
+        <input id="password" class="input" type="password" placeholder="Passwort"
+               autocomplete="current-password" required>
       </div>
 
-      <div class="actions-row">
+      <div class="actions-row" style="justify-content: space-between; align-items: center;">
         <button id="loginBtn" class="btn primary" type="submit">Login</button>
+        <a href="#/reset-password" class="auth-link">Passwort vergessen?</a>
       </div>
     </form>
 
     <!-- Register Form -->
-    <form id="registerForm" class="form-grid auth-form hidden">
+    <form id="registerForm" class="form-grid auth-form hidden" novalidate>
       <div class="field">
-        <label for="regEmail">Email</label>
-        <input id="regEmail" class="input" type="email" placeholder="name@studio.de" autocomplete="email">
+        <label for="regEmail">E-Mail</label>
+        <input id="regEmail" class="input" type="email" placeholder="name@studio.de"
+               autocomplete="email" required>
       </div>
 
       <div class="field">
         <label for="regPassword">Passwort</label>
-        <input id="regPassword" class="input" type="password" placeholder="Mindestens 6 Zeichen" autocomplete="new-password">
+        <input id="regPassword" class="input" type="password"
+               placeholder="Mindestens 8 Zeichen, Groß-/Kleinbuchstaben &amp; Zahl"
+               autocomplete="new-password" required>
+        <!-- Password strength indicator -->
+        <div class="password-strength" id="strengthIndicator" aria-hidden="true">
+          <div class="strength-bar">
+            <span id="sb1"></span>
+            <span id="sb2"></span>
+            <span id="sb3"></span>
+            <span id="sb4"></span>
+          </div>
+          <span class="strength-label" id="strengthLabel"></span>
+        </div>
       </div>
 
       <div class="field">
         <label for="regPasswordConfirm">Passwort bestätigen</label>
-        <input id="regPasswordConfirm" class="input" type="password" placeholder="Passwort wiederholen" autocomplete="new-password">
+        <input id="regPasswordConfirm" class="input" type="password"
+               placeholder="Passwort wiederholen"
+               autocomplete="new-password" required>
       </div>
 
       <div class="actions-row">
@@ -61,132 +82,237 @@
       </div>
     </form>
 
-    <p id="loginHint" class="muted">Bitte mit deinem Konto anmelden.</p>
+    <p id="loginHint" class="muted" role="status" aria-live="polite">Bitte mit deinem Konto anmelden.</p>
   </article>
 </section>
 
 <script>
 (function() {
-  // Tab Switching
-  const loginTab = document.getElementById('loginTab');
-  const registerTab = document.getElementById('registerTab');
-  const loginForm = document.getElementById('loginForm');
-  const registerForm = document.getElementById('registerForm');
-  const formTitle = document.getElementById('formTitle');
-  const formSubtitle = document.getElementById('formSubtitle');
-  const loginHint = document.getElementById('loginHint');
+  'use strict';
+
+  // ── Rate-limiting state ────────────────────────────────────────────────
+  const RATE_LIMIT_MAX     = 3;   // max attempts before lockout
+  const RATE_LIMIT_WINDOW  = 30;  // lockout duration in seconds
+  let loginAttempts  = 0;
+  let lockedUntil    = 0;
+
+  // ── DOM refs ───────────────────────────────────────────────────────────
+  const loginTab          = document.getElementById('loginTab');
+  const registerTab       = document.getElementById('registerTab');
+  const loginForm         = document.getElementById('loginForm');
+  const registerForm      = document.getElementById('registerForm');
+  const formTitle         = document.getElementById('formTitle');
+  const formSubtitle      = document.getElementById('formSubtitle');
+  const loginHint         = document.getElementById('loginHint');
+  const rateLimitWarning  = document.getElementById('rateLimitWarning');
+
+  // ── Helpers ────────────────────────────────────────────────────────────
+
+  function setHint(msg, type) {
+    if (!loginHint) return;
+    loginHint.textContent = msg;
+    loginHint.className = 'muted' + (type ? ' ' + type : '');
+  }
+
+  /**
+   * Password complexity: min 8 chars, at least one uppercase,
+   * one lowercase, and one digit.
+   */
+  function validatePassword(pw) {
+    if (pw.length < 8)                    return { ok: false, msg: 'Passwort muss mindestens 8 Zeichen haben.' };
+    if (!/[A-Z]/.test(pw))               return { ok: false, msg: 'Passwort muss mindestens einen Großbuchstaben enthalten.' };
+    if (!/[a-z]/.test(pw))               return { ok: false, msg: 'Passwort muss mindestens einen Kleinbuchstaben enthalten.' };
+    if (!/[0-9]/.test(pw))               return { ok: false, msg: 'Passwort muss mindestens eine Zahl enthalten.' };
+    return { ok: true };
+  }
+
+  /**
+   * Returns a score 0–4 for the password strength indicator.
+   */
+  function passwordScore(pw) {
+    let score = 0;
+    if (pw.length >= 8)  score++;
+    if (pw.length >= 12) score++;
+    if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw) && /[^A-Za-z0-9]/.test(pw)) score++;
+    return score;
+  }
+
+  function updateStrengthUI(pw) {
+    const bars   = [document.getElementById('sb1'), document.getElementById('sb2'),
+                    document.getElementById('sb3'), document.getElementById('sb4')];
+    const label  = document.getElementById('strengthLabel');
+    if (!bars[0] || !label) return;
+
+    const score  = pw.length === 0 ? 0 : Math.max(1, passwordScore(pw));
+    const levels = ['', 'active-weak', 'active-fair', 'active-good', 'active-strong'];
+    const names  = ['', 'Schwach', 'Ausreichend', 'Gut', 'Stark'];
+
+    bars.forEach((b, i) => {
+      b.className = i < score ? levels[score] : '';
+    });
+    label.textContent = pw.length ? names[score] : '';
+  }
+
+  function isRateLimited() {
+    return Date.now() < lockedUntil;
+  }
+
+  function showRateLimit(secondsLeft) {
+    if (!rateLimitWarning) return;
+    rateLimitWarning.textContent =
+      `Zu viele Versuche. Bitte warte ${secondsLeft} Sekunden.`;
+    rateLimitWarning.classList.add('visible');
+  }
+
+  function hideRateLimit() {
+    if (!rateLimitWarning) return;
+    rateLimitWarning.classList.remove('visible');
+  }
+
+  function startRateLimitCountdown() {
+    const tick = () => {
+      const remaining = Math.ceil((lockedUntil - Date.now()) / 1000);
+      if (remaining <= 0) {
+        hideRateLimit();
+        loginAttempts = 0;
+        return;
+      }
+      showRateLimit(remaining);
+      setTimeout(tick, 1000);
+    };
+    tick();
+  }
+
+  // ── Tab switching ──────────────────────────────────────────────────────
 
   loginTab?.addEventListener('click', () => {
     loginTab.classList.add('active');
     registerTab?.classList.remove('active');
     loginForm?.classList.remove('hidden');
     registerForm?.classList.add('hidden');
-    if (formTitle) formTitle.textContent = 'Login';
-    if (formSubtitle) formSubtitle.textContent = 'Sicher ueber Firebase.';
-    if (loginHint) loginHint.textContent = 'Bitte mit deinem Konto anmelden.';
+    if (formTitle)    formTitle.textContent    = 'Login';
+    if (formSubtitle) formSubtitle.textContent = 'Sicher über Firebase.';
+    setHint('Bitte mit deinem Konto anmelden.');
+    hideRateLimit();
   });
 
   registerTab?.addEventListener('click', () => {
-    registerTab?.classList.add('active');
+    registerTab.classList.add('active');
     loginTab?.classList.remove('active');
     registerForm?.classList.remove('hidden');
     loginForm?.classList.add('hidden');
-    if (formTitle) formTitle.textContent = 'Registrieren';
+    if (formTitle)    formTitle.textContent    = 'Registrieren';
     if (formSubtitle) formSubtitle.textContent = 'Neues Konto erstellen.';
-    if (loginHint) loginHint.textContent = 'Erstelle ein neues Konto.';
+    setHint('Erstelle ein neues Konto.');
+    hideRateLimit();
   });
 
-  // Login Handler
+  // ── Password strength live feedback ───────────────────────────────────
+
+  document.getElementById('regPassword')?.addEventListener('input', (e) => {
+    updateStrengthUI(e.target.value);
+  });
+
+  // ── Login handler ──────────────────────────────────────────────────────
+
   loginForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
-    const email = document.getElementById('email')?.value.trim();
+
+    if (isRateLimited()) {
+      showRateLimit(Math.ceil((lockedUntil - Date.now()) / 1000));
+      return;
+    }
+
+    const email    = document.getElementById('email')?.value.trim();
     const password = document.getElementById('password')?.value;
     const loginBtn = document.getElementById('loginBtn');
-    
+
     if (!email || !password) {
-      if (loginHint) loginHint.textContent = 'Bitte Email und Passwort eingeben.';
+      setHint('Bitte E-Mail und Passwort eingeben.', 'error');
       return;
     }
 
     if (loginBtn) {
-      loginBtn.disabled = true;
-      loginBtn.textContent = 'Wird eingeloggt...';
+      loginBtn.disabled    = true;
+      loginBtn.textContent = 'Wird eingeloggt…';
     }
 
     try {
       const result = await window.login(email, password);
-      
+
       if (result.success) {
-        if (loginHint) loginHint.textContent = 'Login erfolgreich! Weiterleitung...';
-        setTimeout(() => {
-          window.location.href = '#/dashboard';
-        }, 1000);
+        loginAttempts = 0;
+        setHint('Anmeldung erfolgreich! Weiterleitung…', 'success');
+        setTimeout(() => { window.location.href = '#/dashboard'; }, 1000);
       } else {
-        if (loginHint) loginHint.textContent = 'Login fehlgeschlagen: ' + result.error;
-        if (loginBtn) {
-          loginBtn.disabled = false;
-          loginBtn.textContent = 'Login';
+        loginAttempts++;
+        if (loginAttempts >= RATE_LIMIT_MAX) {
+          lockedUntil = Date.now() + RATE_LIMIT_WINDOW * 1000;
+          startRateLimitCountdown();
+          if (loginBtn) loginBtn.disabled = true;
+        } else {
+          setHint('Anmeldung fehlgeschlagen. Bitte überprüfe deine Zugangsdaten.', 'error');
+          if (loginBtn) {
+            loginBtn.disabled    = false;
+            loginBtn.textContent = 'Login';
+          }
         }
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      if (loginHint) loginHint.textContent = 'Ein Fehler ist aufgetreten. Bitte erneut versuchen.';
+    } catch {
+      setHint('Ein Fehler ist aufgetreten. Bitte erneut versuchen.', 'error');
       if (loginBtn) {
-        loginBtn.disabled = false;
+        loginBtn.disabled    = false;
         loginBtn.textContent = 'Login';
       }
     }
   });
 
-  // Register Handler
+  // ── Register handler ───────────────────────────────────────────────────
+
   registerForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
-    const email = document.getElementById('regEmail')?.value.trim();
-    const password = document.getElementById('regPassword')?.value;
+
+    const email           = document.getElementById('regEmail')?.value.trim();
+    const password        = document.getElementById('regPassword')?.value;
     const passwordConfirm = document.getElementById('regPasswordConfirm')?.value;
-    const registerBtn = document.getElementById('registerBtn');
-    
-    if (!email || !password) {
-      if (loginHint) loginHint.textContent = 'Bitte alle Felder ausfuellen.';
+    const registerBtn     = document.getElementById('registerBtn');
+
+    if (!email || !password || !passwordConfirm) {
+      setHint('Bitte alle Felder ausfüllen.', 'error');
       return;
     }
-    
+
+    const pwCheck = validatePassword(password);
+    if (!pwCheck.ok) {
+      setHint(pwCheck.msg, 'error');
+      return;
+    }
+
     if (password !== passwordConfirm) {
-      if (loginHint) loginHint.textContent = 'Passwoerter stimmen nicht ueberein.';
-      return;
-    }
-    
-    if (password.length < 6) {
-      if (loginHint) loginHint.textContent = 'Passwort muss mindestens 6 Zeichen haben.';
+      setHint('Passwörter stimmen nicht überein.', 'error');
       return;
     }
 
     if (registerBtn) {
-      registerBtn.disabled = true;
-      registerBtn.textContent = 'Wird erstellt...';
+      registerBtn.disabled    = true;
+      registerBtn.textContent = 'Wird erstellt…';
     }
 
     try {
-      // Create user with Firebase
       const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
-      const token = await userCredential.user.getIdToken();
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify({
-        uid: userCredential.user.uid,
-        email: userCredential.user.email
-      }));
-      
-      if (loginHint) loginHint.textContent = 'Konto erstellt! Weiterleitung...';
-      setTimeout(() => {
-        window.location.href = '#/dashboard';
-      }, 1000);
-    } catch (error) {
-      console.error('Register error:', error);
-      if (loginHint) loginHint.textContent = 'Registrierung fehlgeschlagen: ' + error.message;
+      const token          = await userCredential.user.getIdToken();
+
+      // Use sessionStorage — cleared when the tab closes, not persistent like localStorage
+      sessionStorage.setItem('token', token);
+
+      setHint('Konto erstellt! Weiterleitung…', 'success');
+      setTimeout(() => { window.location.href = '#/dashboard'; }, 1000);
+    } catch {
+      // Generic message — do not expose Firebase error details to the UI
+      setHint('Registrierung fehlgeschlagen. Bitte versuche es erneut.', 'error');
       if (registerBtn) {
-        registerBtn.disabled = false;
+        registerBtn.disabled    = false;
         registerBtn.textContent = 'Konto erstellen';
       }
     }

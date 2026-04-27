@@ -48,15 +48,15 @@ window.initLoginPage = function() {
         return userCredential.user.getIdToken();
       })
       .then(function(token) {
-        localStorage.setItem('token', token);
-        if (status) status.textContent = 'Login erfolgreich! Weiterleitung...';
+        sessionStorage.setItem('token', token);
+        if (status) status.textContent = 'Anmeldung erfolgreich! Weiterleitung...';
         setTimeout(function() {
           window.location.href = '#/dashboard';
         }, 1000);
       })
       .catch(function(error) {
-        console.error('Login error:', error);
-        if (status) status.textContent = 'Login fehlgeschlagen: ' + error.message;
+        console.error('Login error:', error.code);
+        if (status) status.textContent = 'Anmeldung fehlgeschlagen. Bitte überprüfe deine Zugangsdaten.';
         btn.disabled = false;
         btn.textContent = 'Login';
       });
