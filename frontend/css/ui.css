@@ -55,10 +55,7 @@ button {
   display: grid;
   grid-template-columns: 290px 1fr;
   min-height: 100vh;
-<<<<<<< HEAD
-=======
   -webkit-backdrop-filter: blur(4px);
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
   backdrop-filter: blur(4px);
 }
 
@@ -203,10 +200,7 @@ button {
   padding: 18px 28px;
   border-bottom: 1px solid var(--border);
   background: rgba(7, 11, 21, 0.82);
-<<<<<<< HEAD
-=======
   -webkit-backdrop-filter: blur(18px);
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
   backdrop-filter: blur(18px);
 }
 
@@ -497,7 +491,6 @@ button:hover {
   min-height: 100%;
 }
 
-<<<<<<< HEAD
 .dna-preview {
   display: grid;
   min-height: 320px;
@@ -511,8 +504,6 @@ button:hover {
     url("../assets/system-background.png") center/cover;
 }
 
-=======
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
 .preview-frame {
   display: grid;
   place-items: center;
@@ -688,11 +679,7 @@ button:hover {
 
   .sidebar {
     position: relative;
-<<<<<<< HEAD
     min-height: auto;
-=======
-    min-height: unset;
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
   }
 
   .hero-card,
@@ -701,7 +688,6 @@ button:hover {
   }
 }
 
-<<<<<<< HEAD
 .sheet-page {
   display: grid;
   gap: 14px;
@@ -869,8 +855,6 @@ button:hover {
   }
 }
 
-=======
->>>>>>> a7fe56da0d63a4efd46825431e459d974fd6f6f5
 @media (max-width: 720px) {
   .content,
   .topbar {
@@ -894,4 +878,95 @@ button:hover {
     width: 100%;
     flex-wrap: wrap;
   }
+}
+
+/* ── Auth Forms ─────────────────────────────────────────────────────────── */
+
+.auth-form {
+  grid-template-columns: 1fr;
+}
+
+/* Auth buttons: consistent with .btn but scoped to auth context */
+.auth-form .btn,
+#loginBtn,
+#registerBtn {
+  min-height: 44px;
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  width: auto;
+  align-self: flex-start;
+}
+
+/* Password strength indicator */
+.password-strength {
+  display: grid;
+  gap: 6px;
+  margin-top: -6px;
+}
+
+.strength-bar {
+  display: flex;
+  gap: 4px;
+  height: 4px;
+}
+
+.strength-bar span {
+  flex: 1;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  transition: background-color 0.25s ease;
+}
+
+.strength-bar span.active-weak   { background: var(--danger); }
+.strength-bar span.active-fair   { background: var(--warning); }
+.strength-bar span.active-good   { background: var(--secondary); }
+.strength-bar span.active-strong { background: var(--success); }
+
+.strength-label {
+  font-size: 0.8rem;
+  color: var(--text-soft);
+  min-height: 1.2em;
+}
+
+/* Rate-limit warning */
+.rate-limit-warning {
+  display: none;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fecaca;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.rate-limit-warning.visible {
+  display: block;
+}
+
+/* Forgot-password link */
+.auth-link {
+  font-size: 0.88rem;
+  color: var(--text-soft);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.auth-link:hover {
+  color: var(--secondary);
+}
+
+/* Auth hint / status message */
+#loginHint {
+  margin-top: 4px;
+  font-size: 0.9rem;
+  min-height: 1.4em;
+}
+
+#loginHint.error {
+  color: #fca5a5;
+}
+
+#loginHint.success {
+  color: #86efac;
 }

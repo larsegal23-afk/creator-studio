@@ -12,7 +12,7 @@ window.ApiClient = {
 
   // Authentication helpers
   getAuthHeader() {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     return token ? `Bearer ${token}` : null;
   },
 

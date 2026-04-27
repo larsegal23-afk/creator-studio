@@ -42,25 +42,26 @@
       try {
         const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
         const token = await userCredential.user.getIdToken();
-        localStorage.setItem("token", token);
+        sessionStorage.setItem("token", token);
         return { success: true };
       } catch (error) {
-        return { success: false, error: error.message };
+        // Return a generic flag — callers must not display error.message directly
+        return { success: false, error: 'auth/failed' };
       }
     };
 
     window.logout = async function() {
       await firebase.auth().signOut();
-      localStorage.removeItem("token");
+      sessionStorage.removeItem("token");
       window.location.href = "/";
     };
 
     firebase.auth().onAuthStateChanged(async (user) => {
       if (user) {
         const token = await user.getIdToken();
-        localStorage.setItem("token", token);
+        sessionStorage.setItem("token", token);
       } else {
-        localStorage.removeItem("token");
+        sessionStorage.removeItem("token");
       }
     });
   </script>
